@@ -2400,6 +2400,1512 @@ class TelegramBot {
     }
     
     // ==========================================
+    // MISSING API METHODS
+    // ==========================================
+    
+    /**
+     * Answer chat join request queries
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $userId User ID
+     * @param bool $approve Pass True to accept the request, False to decline
+     * @return array|false True on success or false on failure
+     */
+    public function answerChatJoinRequestQuery($chatId, int $userId, bool $approve) {
+        $data = [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'approve' => $approve
+        ];
+        
+        return $this->makeRequest('answerChatJoinRequestQuery', $data);
+    }
+    
+    /**
+     * Answer guest queries
+     * 
+     * @param string $guestQueryId Guest query ID
+     * @param array $results Array of results for the guest
+     * @param int|null $cacheTime Cache time in seconds
+     * @param bool|null $isPersonal Is result personal
+     * @param string|null $nextOffset Offset for next request
+     * @return array|false True on success or false on failure
+     */
+    public function answerGuestQuery(string $guestQueryId, array $results, ?int $cacheTime = null, 
+                                     ?bool $isPersonal = null, ?string $nextOffset = null) {
+        $data = [
+            'guest_query_id' => $guestQueryId,
+            'results' => json_encode($results)
+        ];
+        
+        if ($cacheTime !== null) $data['cache_time'] = $cacheTime;
+        if ($isPersonal !== null) $data['is_personal'] = $isPersonal;
+        if ($nextOffset !== null) $data['next_offset'] = $nextOffset;
+        
+        return $this->makeRequest('answerGuestQuery', $data);
+    }
+    
+    /**
+     * Answer pre-checkout queries
+     * 
+     * @param string $preCheckoutQueryId Pre-checkout query ID
+     * @param bool $ok Specify True if everything is alright
+     * @param string|null $errorMessage Error message in case of failure
+     * @return array|false True on success or false on failure
+     */
+    public function answerPreCheckoutQuery(string $preCheckoutQueryId, bool $ok, ?string $errorMessage = null) {
+        $data = [
+            'pre_checkout_query_id' => $preCheckoutQueryId,
+            'ok' => $ok
+        ];
+        
+        if ($errorMessage) $data['error_message'] = $errorMessage;
+        
+        return $this->makeRequest('answerPreCheckoutQuery', $data);
+    }
+    
+    /**
+     * Answer shipping queries
+     * 
+     * @param string $shippingQueryId Shipping query ID
+     * @param bool $ok Specify True if delivery is possible
+     * @param array|null $shippingOptions Required if ok is True
+     * @param string|null $errorMessage Error message if ok is False
+     * @return array|false True on success or false on failure
+     */
+    public function answerShippingQuery(string $shippingQueryId, bool $ok, ?array $shippingOptions = null, 
+                                        ?string $errorMessage = null) {
+        $data = [
+            'shipping_query_id' => $shippingQueryId,
+            'ok' => $ok
+        ];
+        
+        if ($shippingOptions) $data['shipping_options'] = json_encode($shippingOptions);
+        if ($errorMessage) $data['error_message'] = $errorMessage;
+        
+        return $this->makeRequest('answerShippingQuery', $data);
+    }
+    
+    /**
+     * Answer web app queries
+     * 
+     * @param string $webAppQueryId Web app query ID
+     * @param array $result Result for the query
+     * @return array|false SentWebAppMessage object or false on failure
+     */
+    public function answerWebAppQuery(string $webAppQueryId, array $result) {
+        $data = [
+            'web_app_query_id' => $webAppQueryId,
+            'result' => json_encode($result)
+        ];
+        
+        return $this->makeRequest('answerWebAppQuery', $data);
+    }
+    
+    /**
+     * Approve suggested posts
+     * 
+     * @param int $suggestedPostId Suggested post ID
+     * @return array|false True on success or false on failure
+     */
+    public function approveSuggestedPost(int $suggestedPostId) {
+        $data = ['suggested_post_id' => $suggestedPostId];
+        
+        return $this->makeRequest('approveSuggestedPost', $data);
+    }
+    
+    /**
+     * Close forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageThreadId Message thread ID
+     * @return array|false True on success or false on failure
+     */
+    public function closeForumTopic($chatId, int $messageThreadId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_thread_id' => $messageThreadId
+        ];
+        
+        return $this->makeRequest('closeForumTopic', $data);
+    }
+    
+    /**
+     * Close general forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false True on success or false on failure
+     */
+    public function closeGeneralForumTopic($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('closeGeneralForumTopic', $data);
+    }
+    
+    /**
+     * Convert gift to stars
+     * 
+     * @param int $giftId Gift ID
+     * @param int $userId User ID who owns the gift
+     * @return array|false True on success or false on failure
+     */
+    public function convertGiftToStars(int $giftId, int $userId) {
+        $data = [
+            'gift_id' => $giftId,
+            'user_id' => $userId
+        ];
+        
+        return $this->makeRequest('convertGiftToStars', $data);
+    }
+    
+    /**
+     * Copy text button
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $text Text to copy
+     * @param int|null $replyToMessageId Reply to message ID
+     * @return array|false MessageId or false on failure
+     */
+    public function copyTextButton($chatId, string $text, ?int $replyToMessageId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'text' => $text
+        ];
+        
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        
+        return $this->makeRequest('copyTextButton', $data);
+    }
+    
+    /**
+     * Create forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $name Topic name
+     * @param int|null $iconColor Icon color
+     * @param string|null $iconCustomEmojiId Custom emoji ID for icon
+     * @return array|false ForumTopic object or false on failure
+     */
+    public function createForumTopic($chatId, string $name, ?int $iconColor = null, 
+                                     ?string $iconCustomEmojiId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'name' => $name
+        ];
+        
+        if ($iconColor) $data['icon_color'] = $iconColor;
+        if ($iconCustomEmojiId) $data['icon_custom_emoji_id'] = $iconCustomEmojiId;
+        
+        return $this->makeRequest('createForumTopic', $data);
+    }
+    
+    /**
+     * Create invoice link
+     * 
+     * @param string $title Product name
+     * @param string $description Product description
+     * @param string $payload Bot-defined invoice payload
+     * @param string $providerToken Payment provider token
+     * @param string $currency Three-letter ISO 4217 currency code
+     * @param array $prices Price breakdown
+     * @param int|null $maxTipAmount Maximum tip amount
+     * @param array|null $suggestedTipAmounts Suggested tip amounts
+     * @param string|null $providerData Provider data
+     * @param string|null $photoUrl URL of product photo
+     * @param int|null $photoSize Photo size
+     * @param int|null $photoWidth Photo width
+     * @param int|null $photoHeight Photo height
+     * @param bool|null $needName Need user name
+     * @param bool|null $needPhoneNumber Need user phone number
+     * @param bool|null $needEmail Need user email
+     * @param bool|null $needShippingAddress Need shipping address
+     * @param bool|null $sendPhoneNumberToProvider Send phone to provider
+     * @param bool|null $sendEmailToProvider Send email to provider
+     * @param bool|null $isFlexible Is flexible
+     * @param int|null $subscriptionPeriod Subscription period
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false Invoice link or false on failure
+     */
+    public function createInvoiceLink(string $title, string $description, string $payload, 
+                                      string $providerToken, string $currency, array $prices,
+                                      ?int $maxTipAmount = null, ?array $suggestedTipAmounts = null,
+                                      ?string $providerData = null, ?string $photoUrl = null,
+                                      ?int $photoSize = null, ?int $photoWidth = null, ?int $photoHeight = null,
+                                      ?bool $needName = null, ?bool $needPhoneNumber = null,
+                                      ?bool $needEmail = null, ?bool $needShippingAddress = null,
+                                      ?bool $sendPhoneNumberToProvider = null, ?bool $sendEmailToProvider = null,
+                                      ?bool $isFlexible = null, ?int $subscriptionPeriod = null,
+                                      ?string $businessConnectionId = null) {
+        $data = [
+            'title' => $title,
+            'description' => $description,
+            'payload' => $payload,
+            'provider_token' => $providerToken,
+            'currency' => $currency,
+            'prices' => json_encode($prices)
+        ];
+        
+        if ($maxTipAmount) $data['max_tip_amount'] = $maxTipAmount;
+        if ($suggestedTipAmounts) $data['suggested_tip_amounts'] = json_encode($suggestedTipAmounts);
+        if ($providerData) $data['provider_data'] = $providerData;
+        if ($photoUrl) $data['photo_url'] = $photoUrl;
+        if ($photoSize) $data['photo_size'] = $photoSize;
+        if ($photoWidth) $data['photo_width'] = $photoWidth;
+        if ($photoHeight) $data['photo_height'] = $photoHeight;
+        if ($needName !== null) $data['need_name'] = $needName;
+        if ($needPhoneNumber !== null) $data['need_phone_number'] = $needPhoneNumber;
+        if ($needEmail !== null) $data['need_email'] = $needEmail;
+        if ($needShippingAddress !== null) $data['need_shipping_address'] = $needShippingAddress;
+        if ($sendPhoneNumberToProvider !== null) $data['send_phone_number_to_provider'] = $sendPhoneNumberToProvider;
+        if ($sendEmailToProvider !== null) $data['send_email_to_provider'] = $sendEmailToProvider;
+        if ($isFlexible !== null) $data['is_flexible'] = $isFlexible;
+        if ($subscriptionPeriod) $data['subscription_period'] = $subscriptionPeriod;
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('createInvoiceLink', $data);
+    }
+    
+    /**
+     * Decline chat join request
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $userId User ID
+     * @return array|false True on success or false on failure
+     */
+    public function declineSuggestedPost(int $suggestedPostId) {
+        $data = ['suggested_post_id' => $suggestedPostId];
+        
+        return $this->makeRequest('declineSuggestedPost', $data);
+    }
+    
+    /**
+     * Delete all message reactions
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageId Message ID
+     * @return array|false True on success or false on failure
+     */
+    public function deleteAllMessageReactions($chatId, int $messageId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId
+        ];
+        
+        return $this->makeRequest('deleteAllMessageReactions', $data);
+    }
+    
+    /**
+     * Delete business messages
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param int|string $chatId Chat ID or username
+     * @param array $messageIds Message IDs to delete
+     * @return array|false True on success or false on failure
+     */
+    public function deleteBusinessMessages(string $businessConnectionId, $chatId, array $messageIds) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'chat_id' => $chatId,
+            'message_ids' => json_encode($messageIds)
+        ];
+        
+        return $this->makeRequest('deleteBusinessMessages', $data);
+    }
+    
+    /**
+     * Delete forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageThreadId Message thread ID
+     * @return array|false True on success or false on failure
+     */
+    public function deleteForumTopic($chatId, int $messageThreadId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_thread_id' => $messageThreadId
+        ];
+        
+        return $this->makeRequest('deleteForumTopic', $data);
+    }
+    
+    /**
+     * Delete a single message (deprecated, use deleteMessages instead)
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageId Message ID to delete
+     * @return array|false True on success or false on failure
+     */
+    public function deleteMessage($chatId, int $messageId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId
+        ];
+        
+        return $this->makeRequest('deleteMessage', $data);
+    }
+    
+    /**
+     * Delete message reaction
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageId Message ID
+     * @return array|false True on success or false on failure
+     */
+    public function deleteMessageReaction($chatId, int $messageId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId
+        ];
+        
+        return $this->makeRequest('deleteMessageReaction', $data);
+    }
+    
+    /**
+     * Delete story
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $storyId Story ID
+     * @return array|false True on success or false on failure
+     */
+    public function deleteStory($chatId, int $storyId) {
+        $data = [
+            'chat_id' => $chatId,
+            'story_id' => $storyId
+        ];
+        
+        return $this->makeRequest('deleteStory', $data);
+    }
+    
+    /**
+     * Edit forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageThreadId Message thread ID
+     * @param string|null $name New topic name
+     * @param string|null $iconCustomEmojiId New custom emoji ID for icon
+     * @return array|false True on success or false on failure
+     */
+    public function editForumTopic($chatId, int $messageThreadId, ?string $name = null, 
+                                   ?string $iconCustomEmojiId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_thread_id' => $messageThreadId
+        ];
+        
+        if ($name) $data['name'] = $name;
+        if ($iconCustomEmojiId) $data['icon_custom_emoji_id'] = $iconCustomEmojiId;
+        
+        return $this->makeRequest('editForumTopic', $data);
+    }
+    
+    /**
+     * Edit general forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $name New topic name
+     * @return array|false True on success or false on failure
+     */
+    public function editGeneralForumTopic($chatId, string $name) {
+        $data = [
+            'chat_id' => $chatId,
+            'name' => $name
+        ];
+        
+        return $this->makeRequest('editGeneralForumTopic', $data);
+    }
+    
+    /**
+     * Edit message checklist
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageId Message ID
+     * @param array $checklist Checklist content
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false Message or false on failure
+     */
+    public function editMessageChecklist($chatId, int $messageId, array $checklist, 
+                                         ?string $businessConnectionId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'checklist' => json_encode($checklist)
+        ];
+        
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('editMessageChecklist', $data);
+    }
+    
+    /**
+     * Edit message reply markup
+     * 
+     * @param int|string $chatId Chat ID or username (optional for inline messages)
+     * @param int|null $messageId Message ID (optional for inline messages)
+     * @param string|null $inlineMessageId Inline message ID (optional)
+     * @param array|null $replyMarkup New reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false Message or false on failure
+     */
+    public function editMessageReplyMarkup($chatId = null, ?int $messageId = null, 
+                                           ?string $inlineMessageId = null, ?array $replyMarkup = null,
+                                           ?string $businessConnectionId = null) {
+        $data = [];
+        
+        if ($chatId) $data['chat_id'] = $chatId;
+        if ($messageId) $data['message_id'] = $messageId;
+        if ($inlineMessageId) $data['inline_message_id'] = $inlineMessageId;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('editMessageReplyMarkup', $data);
+    }
+    
+    /**
+     * Edit story
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $storyId Story ID
+     * @param array|null $caption Caption entities
+     * @param array|null $showCaptionAboveMedia Show caption above media
+     * @param int|null $privacyList Privacy list
+     * @return array|false True on success or false on failure
+     */
+    public function editStory($chatId, int $storyId, ?array $caption = null, 
+                              ?bool $showCaptionAboveMedia = null, ?array $privacyList = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'story_id' => $storyId
+        ];
+        
+        if ($caption) $data['caption'] = json_encode($caption);
+        if ($showCaptionAboveMedia !== null) $data['show_caption_above_media'] = $showCaptionAboveMedia;
+        if ($privacyList) $data['privacy_list'] = json_encode($privacyList);
+        
+        return $this->makeRequest('editStory', $data);
+    }
+    
+    /**
+     * Edit user star subscription
+     * 
+     * @param int $userId User ID
+     * @param string $telegramPaymentChargeId Telegram payment charge ID
+     * @param int $newStarCount New star count
+     * @return array|false True on success or false on failure
+     */
+    public function editUserStarSubscription(int $userId, string $telegramPaymentChargeId, int $newStarCount) {
+        $data = [
+            'user_id' => $userId,
+            'telegram_payment_charge_id' => $telegramPaymentChargeId,
+            'star_count' => $newStarCount
+        ];
+        
+        return $this->makeRequest('editUserStarSubscription', $data);
+    }
+    
+    /**
+     * Get business account gifts
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param int|null $offset Offset for pagination
+     * @param int|null $limit Limit for pagination
+     * @return array|false OwnedGifts object or false on failure
+     */
+    public function getBusinessAccountGifts(string $businessConnectionId, ?int $offset = null, 
+                                            ?int $limit = null) {
+        $data = ['business_connection_id' => $businessConnectionId];
+        
+        if ($offset !== null) $data['offset'] = $offset;
+        if ($limit !== null) $data['limit'] = $limit;
+        
+        return $this->makeRequest('getBusinessAccountGifts', $data);
+    }
+    
+    /**
+     * Get business account star balance
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @return array|false StarAmount object or false on failure
+     */
+    public function getBusinessAccountStarBalance(string $businessConnectionId) {
+        $data = ['business_connection_id' => $businessConnectionId];
+        
+        return $this->makeRequest('getBusinessAccountStarBalance', $data);
+    }
+    
+    /**
+     * Get chat gifts
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false Gifts object or false on failure
+     */
+    public function getChatGifts($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('getChatGifts', $data);
+    }
+    
+    /**
+     * Get chat menu button
+     * 
+     * @param int|null $chatId Chat ID or username
+     * @return array|false MenuButton object or false on failure
+     */
+    public function getChatMenuButton(?int $chatId = null) {
+        $data = [];
+        if ($chatId) $data['chat_id'] = $chatId;
+        
+        return $this->makeRequest('getChatMenuButton', $data);
+    }
+    
+    /**
+     * Get forum topic icon stickers
+     * 
+     * @return array|false Array of Sticker objects or false on failure
+     */
+    public function getForumTopicIconStickers() {
+        return $this->makeRequest('getForumTopicIconStickers');
+    }
+    
+    /**
+     * Get game high scores
+     * 
+     * @param int $userId User ID
+     * @param int|null $chatId Chat ID (optional for inline games)
+     * @param int|null $messageId Message ID (optional for inline games)
+     * @param string|null $inlineMessageId Inline message ID (optional)
+     * @return array|false Array of GameHighScore objects or false on failure
+     */
+    public function getGameHighScores(int $userId, ?int $chatId = null, ?int $messageId = null, 
+                                      ?string $inlineMessageId = null) {
+        $data = ['user_id' => $userId];
+        
+        if ($chatId) $data['chat_id'] = $chatId;
+        if ($messageId) $data['message_id'] = $messageId;
+        if ($inlineMessageId) $data['inline_message_id'] = $inlineMessageId;
+        
+        return $this->makeRequest('getGameHighScores', $data);
+    }
+    
+    /**
+     * Get managed bot access settings
+     * 
+     * @param string $botAccessToken Bot access token
+     * @return array|false BotAccessSettings object or false on failure
+     */
+    public function getManagedBotAccessSettings(string $botAccessToken) {
+        $data = ['bot_access_token' => $botAccessToken];
+        
+        return $this->makeRequest('getManagedBotAccessSettings', $data);
+    }
+    
+    /**
+     * Get managed bot token
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $botId Bot ID
+     * @return array|false Bot access info or false on failure
+     */
+    public function getManagedBotToken($chatId, int $botId) {
+        $data = [
+            'chat_id' => $chatId,
+            'bot_id' => $botId
+        ];
+        
+        return $this->makeRequest('getManagedBotToken', $data);
+    }
+    
+    /**
+     * Get my star balance
+     * 
+     * @return array|false StarAmount object or false on failure
+     */
+    public function getMyStarBalance() {
+        return $this->makeRequest('getMyStarBalance');
+    }
+    
+    /**
+     * Get star transactions
+     * 
+     * @param int|null $offset Offset for pagination
+     * @param int|null $limit Limit for pagination
+     * @return array|false StarTransactions object or false on failure
+     */
+    public function getStarTransactions(?int $offset = null, ?int $limit = null) {
+        $data = [];
+        
+        if ($offset !== null) $data['offset'] = $offset;
+        if ($limit !== null) $data['limit'] = $limit;
+        
+        return $this->makeRequest('getStarTransactions', $data);
+    }
+    
+    /**
+     * Get user gifts
+     * 
+     * @param int $userId User ID
+     * @return array|false OwnedGifts object or false on failure
+     */
+    public function getUserGifts(int $userId) {
+        $data = ['user_id' => $userId];
+        
+        return $this->makeRequest('getUserGifts', $data);
+    }
+    
+    /**
+     * Get user personal chat messages
+     * 
+     * @param int $userId User ID
+     * @param int|string $chatId Chat ID or username
+     * @param int|null $offset Offset for pagination
+     * @param int|null $limit Limit for pagination
+     * @return array|false Array of Message objects or false on failure
+     */
+    public function getUserPersonalChatMessages(int $userId, $chatId, ?int $offset = null, 
+                                                 ?int $limit = null) {
+        $data = [
+            'user_id' => $userId,
+            'chat_id' => $chatId
+        ];
+        
+        if ($offset !== null) $data['offset'] = $offset;
+        if ($limit !== null) $data['limit'] = $limit;
+        
+        return $this->makeRequest('getUserPersonalChatMessages', $data);
+    }
+    
+    /**
+     * Get user profile audios
+     * 
+     * @param int $userId User ID
+     * @param int|null $offset Offset for pagination
+     * @param int|null $limit Limit for pagination
+     * @return array|false UserProfileAudios object or false on failure
+     */
+    public function getUserProfileAudios(int $userId, ?int $offset = null, ?int $limit = null) {
+        $data = ['user_id' => $userId];
+        
+        if ($offset !== null) $data['offset'] = $offset;
+        if ($limit !== null) $data['limit'] = $limit;
+        
+        return $this->makeRequest('getUserProfileAudios', $data);
+    }
+    
+    /**
+     * Hide general forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false True on success or false on failure
+     */
+    public function hideGeneralForumTopic($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('hideGeneralForumTopic', $data);
+    }
+    
+    /**
+     * Post story
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param array $content Story content
+     * @param array|null $caption Caption
+     * @param bool|null $showCaptionAboveMedia Show caption above media
+     * @param int|null $privacyList Privacy list
+     * @return array|false Story object or false on failure
+     */
+    public function postStory($chatId, array $content, ?array $caption = null, 
+                              ?bool $showCaptionAboveMedia = null, ?array $privacyList = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'content' => json_encode($content)
+        ];
+        
+        if ($caption) $data['caption'] = json_encode($caption);
+        if ($showCaptionAboveMedia !== null) $data['show_caption_above_media'] = $showCaptionAboveMedia;
+        if ($privacyList) $data['privacy_list'] = json_encode($privacyList);
+        
+        return $this->makeRequest('postStory', $data);
+    }
+    
+    /**
+     * Refund star payment
+     * 
+     * @param int $userId User ID
+     * @param string $telegramPaymentChargeId Telegram payment charge ID
+     * @return array|false True on success or false on failure
+     */
+    public function refundStarPayment(int $userId, string $telegramPaymentChargeId) {
+        $data = [
+            'user_id' => $userId,
+            'telegram_payment_charge_id' => $telegramPaymentChargeId
+        ];
+        
+        return $this->makeRequest('refundStarPayment', $data);
+    }
+    
+    /**
+     * Reopen forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageThreadId Message thread ID
+     * @return array|false True on success or false on failure
+     */
+    public function reopenForumTopic($chatId, int $messageThreadId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_thread_id' => $messageThreadId
+        ];
+        
+        return $this->makeRequest('reopenForumTopic', $data);
+    }
+    
+    /**
+     * Reopen general forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false True on success or false on failure
+     */
+    public function reopenGeneralForumTopic($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('reopenGeneralForumTopic', $data);
+    }
+    
+    /**
+     * Repost story
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int|string $fromChatId Source chat ID
+     * @param int $storyId Story ID
+     * @param array|null $caption Caption
+     * @param bool|null $showCaptionAboveMedia Show caption above media
+     * @return array|false Story object or false on failure
+     */
+    public function repostStory($chatId, $fromChatId, int $storyId, ?array $caption = null, 
+                                ?bool $showCaptionAboveMedia = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'from_chat_id' => $fromChatId,
+            'story_id' => $storyId
+        ];
+        
+        if ($caption) $data['caption'] = json_encode($caption);
+        if ($showCaptionAboveMedia !== null) $data['show_caption_above_media'] = $showCaptionAboveMedia;
+        
+        return $this->makeRequest('repostStory', $data);
+    }
+    
+    /**
+     * Save prepared inline message
+     * 
+     * @param array $content Prepared inline message content
+     * @param string|null $userId Target user ID
+     * @return array|false PreparedInlineMessage object or false on failure
+     */
+    public function savePreparedInlineMessage(array $content, ?string $userId = null) {
+        $data = ['content' => json_encode($content)];
+        
+        if ($userId) $data['user_id'] = $userId;
+        
+        return $this->makeRequest('savePreparedInlineMessage', $data);
+    }
+    
+    /**
+     * Save prepared keyboard button
+     * 
+     * @param array $button Prepared keyboard button
+     * @param string|null $userId Target user ID
+     * @return array|false PreparedKeyboardButton object or false on failure
+     */
+    public function savePreparedKeyboardButton(array $button, ?string $userId = null) {
+        $data = ['button' => json_encode($button)];
+        
+        if ($userId) $data['user_id'] = $userId;
+        
+        return $this->makeRequest('savePreparedKeyboardButton', $data);
+    }
+    
+    /**
+     * Send chat join request web app
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $url Web app URL
+     * @return array|false SentWebAppMessage object or false on failure
+     */
+    public function sendChatJoinRequestWebApp($chatId, string $url) {
+        $data = [
+            'chat_id' => $chatId,
+            'url' => $url
+        ];
+        
+        return $this->makeRequest('sendChatJoinRequestWebApp', $data);
+    }
+    
+    /**
+     * Send checklist
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param array $checklist Checklist content
+     * @param string|null $businessConnectionId Business connection ID
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @return array|false Message or false on failure
+     */
+    public function sendChecklist($chatId, array $checklist, ?string $businessConnectionId = null,
+                                  ?bool $disableNotification = null, ?bool $protectContent = null,
+                                  ?int $replyToMessageId = null, ?bool $allowSendingWithoutReply = null,
+                                  ?array $replyMarkup = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'checklist' => json_encode($checklist)
+        ];
+        
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        
+        return $this->makeRequest('sendChecklist', $data);
+    }
+    
+    /**
+     * Send game
+     * 
+     * @param int $chatId Chat ID
+     * @param string $gameShortName Short name of the game
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @param string|null $messageEffectId Message effect ID
+     * @return array|false Message or false on failure
+     */
+    public function sendGame(int $chatId, string $gameShortName, ?bool $disableNotification = null,
+                             ?bool $protectContent = null, ?int $replyToMessageId = null,
+                             ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                             ?string $businessConnectionId = null, ?string $messageEffectId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'game_short_name' => $gameShortName
+        ];
+        
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($messageEffectId) $data['message_effect_id'] = $messageEffectId;
+        
+        return $this->makeRequest('sendGame', $data);
+    }
+    
+    /**
+     * Send invoice
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $title Product name
+     * @param string $description Product description
+     * @param string $payload Bot-defined invoice payload
+     * @param string $providerToken Payment provider token
+     * @param string $currency Three-letter ISO 4217 currency code
+     * @param array $prices Price breakdown
+     * @param int|null $maxTipAmount Maximum tip amount
+     * @param array|null $suggestedTipAmounts Suggested tip amounts
+     * @param int|null $startParameter Start parameter
+     * @param string|null $providerData Provider data
+     * @param string|null $photoUrl URL of product photo
+     * @param int|null $photoSize Photo size
+     * @param int|null $photoWidth Photo width
+     * @param int|null $photoHeight Photo height
+     * @param bool|null $needName Need user name
+     * @param bool|null $needPhoneNumber Need user phone number
+     * @param bool|null $needEmail Need user email
+     * @param bool|null $needShippingAddress Need shipping address
+     * @param bool|null $sendPhoneNumberToProvider Send phone to provider
+     * @param bool|null $sendEmailToProvider Send email to provider
+     * @param bool|null $isFlexible Is flexible
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param int|null $subscriptionPeriod Subscription period
+     * @param string|null $businessConnectionId Business connection ID
+     * @param string|null $messageEffectId Message effect ID
+     * @param array|null $linkPreviewOptions Link preview options
+     * @return array|false Message or false on failure
+     */
+    public function sendInvoice($chatId, string $title, string $description, string $payload,
+                                string $providerToken, string $currency, array $prices,
+                                ?int $maxTipAmount = null, ?array $suggestedTipAmounts = null,
+                                ?int $startParameter = null, ?string $providerData = null,
+                                ?string $photoUrl = null, ?int $photoSize = null, ?int $photoWidth = null,
+                                ?int $photoHeight = null, ?bool $needName = null, ?bool $needPhoneNumber = null,
+                                ?bool $needEmail = null, ?bool $needShippingAddress = null,
+                                ?bool $sendPhoneNumberToProvider = null, ?bool $sendEmailToProvider = null,
+                                ?bool $isFlexible = null, ?bool $disableNotification = null,
+                                ?bool $protectContent = null, ?int $replyToMessageId = null,
+                                ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                                ?int $subscriptionPeriod = null, ?string $businessConnectionId = null,
+                                ?string $messageEffectId = null, ?array $linkPreviewOptions = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'title' => $title,
+            'description' => $description,
+            'payload' => $payload,
+            'provider_token' => $providerToken,
+            'currency' => $currency,
+            'prices' => json_encode($prices)
+        ];
+        
+        if ($maxTipAmount) $data['max_tip_amount'] = $maxTipAmount;
+        if ($suggestedTipAmounts) $data['suggested_tip_amounts'] = json_encode($suggestedTipAmounts);
+        if ($startParameter) $data['start_parameter'] = $startParameter;
+        if ($providerData) $data['provider_data'] = $providerData;
+        if ($photoUrl) $data['photo_url'] = $photoUrl;
+        if ($photoSize) $data['photo_size'] = $photoSize;
+        if ($photoWidth) $data['photo_width'] = $photoWidth;
+        if ($photoHeight) $data['photo_height'] = $photoHeight;
+        if ($needName !== null) $data['need_name'] = $needName;
+        if ($needPhoneNumber !== null) $data['need_phone_number'] = $needPhoneNumber;
+        if ($needEmail !== null) $data['need_email'] = $needEmail;
+        if ($needShippingAddress !== null) $data['need_shipping_address'] = $needShippingAddress;
+        if ($sendPhoneNumberToProvider !== null) $data['send_phone_number_to_provider'] = $sendPhoneNumberToProvider;
+        if ($sendEmailToProvider !== null) $data['send_email_to_provider'] = $sendEmailToProvider;
+        if ($isFlexible !== null) $data['is_flexible'] = $isFlexible;
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($subscriptionPeriod) $data['subscription_period'] = $subscriptionPeriod;
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($messageEffectId) $data['message_effect_id'] = $messageEffectId;
+        if ($linkPreviewOptions) $data['link_preview_options'] = json_encode($linkPreviewOptions);
+        
+        return $this->makeRequest('sendInvoice', $data);
+    }
+    
+    /**
+     * Send live photo
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param mixed $media Media file to send
+     * @param mixed|null $thumbnail Thumbnail file
+     * @param string|null $caption Caption text
+     * @param string|null $parseMode Parse mode
+     * @param array|null $captionEntities Caption entities
+     * @param bool|null $showCaptionAboveMedia Show caption above media
+     * @param bool|null $hasSpoiler Has spoiler
+     * @param int|null $period Period in seconds
+     * @param int|null $livePeriod Live period in seconds
+     * @param int|null $proximityAlertRadius Proximity alert radius
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @param string|null $messageEffectId Message effect ID
+     * @return array|false Message or false on failure
+     */
+    public function sendLivePhoto($chatId, $media, $thumbnail = null, ?string $caption = null,
+                                  ?string $parseMode = null, ?array $captionEntities = null,
+                                  ?bool $showCaptionAboveMedia = null, ?bool $hasSpoiler = null,
+                                  ?int $period = null, ?int $livePeriod = null,
+                                  ?int $proximityAlertRadius = null, ?bool $disableNotification = null,
+                                  ?bool $protectContent = null, ?int $replyToMessageId = null,
+                                  ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                                  ?string $businessConnectionId = null, ?string $messageEffectId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'media' => is_string($media) ? $media : new CURLFile($media)
+        ];
+        
+        if ($thumbnail) $data['thumbnail'] = is_string($thumbnail) ? $thumbnail : new CURLFile($thumbnail);
+        if ($caption) $data['caption'] = $caption;
+        if ($parseMode) $data['parse_mode'] = $parseMode;
+        if ($captionEntities) $data['caption_entities'] = json_encode($captionEntities);
+        if ($showCaptionAboveMedia !== null) $data['show_caption_above_media'] = $showCaptionAboveMedia;
+        if ($hasSpoiler !== null) $data['has_spoiler'] = $hasSpoiler;
+        if ($period) $data['period'] = $period;
+        if ($livePeriod) $data['live_period'] = $livePeriod;
+        if ($proximityAlertRadius) $data['proximity_alert_radius'] = $proximityAlertRadius;
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($messageEffectId) $data['message_effect_id'] = $messageEffectId;
+        
+        return $this->makeFileRequest('sendLivePhoto', $data);
+    }
+    
+    /**
+     * Send message draft
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $text Message text
+     * @param string|null $parseMode Parse mode
+     * @param array|null $entities Entities
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false MessageId or false on failure
+     */
+    public function sendMessageDraft($chatId, string $text, ?string $parseMode = null, ?array $entities = null,
+                                     ?bool $disableNotification = null, ?bool $protectContent = null,
+                                     ?int $replyToMessageId = null, ?bool $allowSendingWithoutReply = null,
+                                     ?array $replyMarkup = null, ?string $businessConnectionId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'text' => $text
+        ];
+        
+        if ($parseMode) $data['parse_mode'] = $parseMode;
+        if ($entities) $data['entities'] = json_encode($entities);
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('sendMessageDraft', $data);
+    }
+    
+    /**
+     * Send rich message
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param array $content Rich message content
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @param string|null $messageEffectId Message effect ID
+     * @return array|false Message or false on failure
+     */
+    public function sendRichMessage($chatId, array $content, ?bool $disableNotification = null,
+                                    ?bool $protectContent = null, ?int $replyToMessageId = null,
+                                    ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                                    ?string $businessConnectionId = null, ?string $messageEffectId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'content' => json_encode($content)
+        ];
+        
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($messageEffectId) $data['message_effect_id'] = $messageEffectId;
+        
+        return $this->makeRequest('sendRichMessage', $data);
+    }
+    
+    /**
+     * Send rich message draft
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param array $content Rich message content
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false MessageId or false on failure
+     */
+    public function sendRichMessageDraft($chatId, array $content, ?bool $disableNotification = null,
+                                         ?bool $protectContent = null, ?int $replyToMessageId = null,
+                                         ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                                         ?string $businessConnectionId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'content' => json_encode($content)
+        ];
+        
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('sendRichMessageDraft', $data);
+    }
+    
+    /**
+     * Send sticker
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param mixed $sticker Sticker file to send
+     * @param string|null $emoji Emoji associated with the sticker
+     * @param bool|null $disableNotification Disable notification
+     * @param bool|null $protectContent Protect content
+     * @param int|null $replyToMessageId Reply to message ID
+     * @param bool|null $allowSendingWithoutReply Allow sending without reply
+     * @param array|null $replyMarkup Reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @param string|null $messageEffectId Message effect ID
+     * @return array|false Message or false on failure
+     */
+    public function sendSticker($chatId, $sticker, ?string $emoji = null, ?bool $disableNotification = null,
+                                ?bool $protectContent = null, ?int $replyToMessageId = null,
+                                ?bool $allowSendingWithoutReply = null, ?array $replyMarkup = null,
+                                ?string $businessConnectionId = null, ?string $messageEffectId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'sticker' => is_string($sticker) ? $sticker : new CURLFile($sticker)
+        ];
+        
+        if ($emoji) $data['emoji'] = $emoji;
+        if ($disableNotification) $data['disable_notification'] = $disableNotification;
+        if ($protectContent) $data['protect_content'] = $protectContent;
+        if ($replyToMessageId) $data['reply_to_message_id'] = $replyToMessageId;
+        if ($allowSendingWithoutReply) $data['allow_sending_without_reply'] = $allowSendingWithoutReply;
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        if ($messageEffectId) $data['message_effect_id'] = $messageEffectId;
+        
+        return $this->makeFileRequest('sendSticker', $data);
+    }
+    
+    /**
+     * Set business account bio
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param string|null $bio New bio text
+     * @return array|false True on success or false on failure
+     */
+    public function setBusinessAccountBio(string $businessConnectionId, ?string $bio = null) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'bio' => $bio
+        ];
+        
+        return $this->makeRequest('setBusinessAccountBio', $data);
+    }
+    
+    /**
+     * Set business account gift settings
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param array $giftSettings Gift settings
+     * @return array|false True on success or false on failure
+     */
+    public function setBusinessAccountGiftSettings(string $businessConnectionId, array $giftSettings) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'gift_settings' => json_encode($giftSettings)
+        ];
+        
+        return $this->makeRequest('setBusinessAccountGiftSettings', $data);
+    }
+    
+    /**
+     * Set business account name
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param string|null $name New name
+     * @return array|false True on success or false on failure
+     */
+    public function setBusinessAccountName(string $businessConnectionId, ?string $name = null) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'name' => $name
+        ];
+        
+        return $this->makeRequest('setBusinessAccountName', $data);
+    }
+    
+    /**
+     * Set business account profile photo
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param mixed $photo Photo file
+     * @return array|false True on success or false on failure
+     */
+    public function setBusinessAccountProfilePhoto(string $businessConnectionId, $photo) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'photo' => is_string($photo) ? $photo : new CURLFile($photo)
+        ];
+        
+        return $this->makeFileRequest('setBusinessAccountProfilePhoto', $data);
+    }
+    
+    /**
+     * Set business account username
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param string|null $username New username
+     * @return array|false True on success or false on failure
+     */
+    public function setBusinessAccountUsername(string $businessConnectionId, ?string $username = null) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'username' => $username
+        ];
+        
+        return $this->makeRequest('setBusinessAccountUsername', $data);
+    }
+    
+    /**
+     * Set chat member tag
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $userId User ID
+     * @param string|null $customTitle New custom title
+     * @return array|false True on success or false on failure
+     */
+    public function setChatMemberTag($chatId, int $userId, ?string $customTitle = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'custom_title' => $customTitle
+        ];
+        
+        return $this->makeRequest('setChatMemberTag', $data);
+    }
+    
+    /**
+     * Set chat menu button
+     * 
+     * @param int|null $chatId Chat ID or username
+     * @param array $menuButton Menu button configuration
+     * @return array|false True on success or false on failure
+     */
+    public function setChatMenuButton(?int $chatId = null, array $menuButton = []) {
+        $data = [];
+        if ($chatId) $data['chat_id'] = $chatId;
+        if ($menuButton) $data['menu_button'] = json_encode($menuButton);
+        
+        return $this->makeRequest('setChatMenuButton', $data);
+    }
+    
+    /**
+     * Set game score
+     * 
+     * @param int $userId User ID
+     * @param int $score New score value
+     * @param bool|null $force Force update
+     * @param bool|null $disableEditMessage Disable edit message
+     * @param int|null $chatId Chat ID (optional for inline games)
+     * @param int|null $messageId Message ID (optional for inline games)
+     * @param string|null $inlineMessageId Inline message ID (optional)
+     * @return array|false Message or false on failure
+     */
+    public function setGameScore(int $userId, int $score, ?bool $force = null, ?bool $disableEditMessage = null,
+                                 ?int $chatId = null, ?int $messageId = null, ?string $inlineMessageId = null) {
+        $data = [
+            'user_id' => $userId,
+            'score' => $score
+        ];
+        
+        if ($force !== null) $data['force'] = $force;
+        if ($disableEditMessage !== null) $data['disable_edit_message'] = $disableEditMessage;
+        if ($chatId) $data['chat_id'] = $chatId;
+        if ($messageId) $data['message_id'] = $messageId;
+        if ($inlineMessageId) $data['inline_message_id'] = $inlineMessageId;
+        
+        return $this->makeRequest('setGameScore', $data);
+    }
+    
+    /**
+     * Set managed bot access settings
+     * 
+     * @param string $botAccessToken Bot access token
+     * @param array $accessSettings Access settings
+     * @return array|false True on success or false on failure
+     */
+    public function setManagedBotAccessSettings(string $botAccessToken, array $accessSettings) {
+        $data = [
+            'bot_access_token' => $botAccessToken,
+            'access_settings' => json_encode($accessSettings)
+        ];
+        
+        return $this->makeRequest('setManagedBotAccessSettings', $data);
+    }
+    
+    /**
+     * Set my profile photo
+     * 
+     * @param mixed $photo Photo file
+     * @return array|false True on success or false on failure
+     */
+    public function setMyProfilePhoto($photo) {
+        $data = ['photo' => is_string($photo) ? $photo : new CURLFile($photo)];
+        
+        return $this->makeFileRequest('setMyProfilePhoto', $data);
+    }
+    
+    /**
+     * Set passport data errors
+     * 
+     * @param int $userId User ID
+     * @param array $errors Array of PassportElementError objects
+     * @return array|false True on success or false on failure
+     */
+    public function setPassportDataErrors(int $userId, array $errors) {
+        $data = [
+            'user_id' => $userId,
+            'errors' => json_encode($errors)
+        ];
+        
+        return $this->makeRequest('setPassportDataErrors', $data);
+    }
+    
+    /**
+     * Stop poll
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageId Message ID of the poll
+     * @param array|null $replyMarkup New reply markup
+     * @param string|null $businessConnectionId Business connection ID
+     * @return array|false Poll object or false on failure
+     */
+    public function stopPoll($chatId, int $messageId, ?array $replyMarkup = null, 
+                             ?string $businessConnectionId = null) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId
+        ];
+        
+        if ($replyMarkup) $data['reply_markup'] = json_encode($replyMarkup);
+        if ($businessConnectionId) $data['business_connection_id'] = $businessConnectionId;
+        
+        return $this->makeRequest('stopPoll', $data);
+    }
+    
+    /**
+     * Transfer business account stars
+     * 
+     * @param string $businessConnectionId Business connection ID
+     * @param int $amount Amount of stars to transfer
+     * @param int $userId User ID to transfer to
+     * @return array|false StarTransactions object or false on failure
+     */
+    public function transferBusinessAccountStars(string $businessConnectionId, int $amount, int $userId) {
+        $data = [
+            'business_connection_id' => $businessConnectionId,
+            'amount' => $amount,
+            'user_id' => $userId
+        ];
+        
+        return $this->makeRequest('transferBusinessAccountStars', $data);
+    }
+    
+    /**
+     * Transfer gift
+     * 
+     * @param int $giftId Gift ID
+     * @param int $fromUserId From user ID
+     * @param int $toUserId To user ID
+     * @param string|null $text Text to include with the gift
+     * @return array|false True on success or false on failure
+     */
+    public function transferGift(int $giftId, int $fromUserId, int $toUserId, ?string $text = null) {
+        $data = [
+            'gift_id' => $giftId,
+            'from_user_id' => $fromUserId,
+            'to_user_id' => $toUserId
+        ];
+        
+        if ($text) $data['text'] = $text;
+        
+        return $this->makeRequest('transferGift', $data);
+    }
+    
+    /**
+     * Unhide general forum topic
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false True on success or false on failure
+     */
+    public function unhideGeneralForumTopic($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('unhideGeneralForumTopic', $data);
+    }
+    
+    /**
+     * Unpin all forum topic messages
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param int $messageThreadId Message thread ID
+     * @return array|false True on success or false on failure
+     */
+    public function unpinAllForumTopicMessages($chatId, int $messageThreadId) {
+        $data = [
+            'chat_id' => $chatId,
+            'message_thread_id' => $messageThreadId
+        ];
+        
+        return $this->makeRequest('unpinAllForumTopicMessages', $data);
+    }
+    
+    /**
+     * Unpin all general forum topic messages
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @return array|false True on success or false on failure
+     */
+    public function unpinAllGeneralForumTopicMessages($chatId) {
+        $data = ['chat_id' => $chatId];
+        
+        return $this->makeRequest('unpinAllGeneralForumTopicMessages', $data);
+    }
+    
+    /**
+     * Upgrade gift
+     * 
+     * @param int $giftId Gift ID
+     * @param int $userId User ID who owns the gift
+     * @return array|false True on success or false on failure
+     */
+    public function upgradeGift(int $giftId, int $userId) {
+        $data = [
+            'gift_id' => $giftId,
+            'user_id' => $userId
+        ];
+        
+        return $this->makeRequest('upgradeGift', $data);
+    }
+    
+    /**
+     * Write access allowed
+     * 
+     * @param int|string $chatId Chat ID or username
+     * @param string $reason Reason for write access
+     * @return array|false True on success or false on failure
+     */
+    public function writeAccessAllowed($chatId, string $reason) {
+        $data = [
+            'chat_id' => $chatId,
+            'reason' => $reason
+        ];
+        
+        return $this->makeRequest('writeAccessAllowed', $data);
+    }
+    
+    // ==========================================
     // SENDING MESSAGES WITH KEYBOARDS (HELPER METHODS)
     // ==========================================
     
