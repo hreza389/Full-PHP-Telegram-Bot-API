@@ -1,213 +1,314 @@
 <?php
 
 require_once 'TelegramBot.php';
-require_once 'InputFile.php';
-require_once 'Keyboard.php';
+require_once 'TelegramResponse.php';
+require_once 'TelegramTypes.php';
+require_once 'TelegramBotDispatcher.php';
 
 /**
- * Advanced Example: Feature-Rich Telegram Bot
+ * Advanced Telegram Bot Example with Event Dispatcher
  * 
- * Demonstrates:
- * - File uploads with InputFile helper
- * - Complex keyboards with Keyboard helper
- * - Conversation states
- * - Admin commands
- * - Media groups
- * - Polls and quizzes
+ * Demonstrates modern event-driven bot architecture with:
+ * - Command handlers with aliases and admin restrictions
+ * - Callback query handlers with pattern matching
+ * - Message filters (text, type, chat type)
+ * - Event listeners for various update types
+ * - Conversation state management
+ * - Inline keyboards and reply keyboards
  */
 
-// Configuration
-$botToken = 'YOUR_BOT_TOKEN_HERE';
-$bot = new TelegramBot($botToken);
+// Initialize bot
+$bot = new TelegramBot('YOUR_BOT_TOKEN_HERE');
+$dispatcher = new TelegramBotDispatcher($bot);
 
-// Simple in-memory state storage (use Redis/Database in production)
-$userStates = [];
+// Store conversation states (in production, use a database)
+$conversations = [];
 
-// Get updates
-$updates = $bot->getUpdates();
+/* =============================================================================
+   COMMAND HANDLERS
+   ============================================================================= */
 
-if (!empty($updates)) {
-    foreach ($updates as $update) {
-        $chatId = $update['message']['chat']['id'] ?? null;
-        $userId = $update['message']['from']['id'] ?? null;
-        $text = $update['message']['text'] ?? '';
-        $callbackData = $update['callback_query']['data'] ?? null;
-        $callbackId = $update['callback_query']['id'] ?? null;
+// /start command
+$dispatcher->onCommand('start', function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $firstName = $message['from']['first_name'] ?? 'User';
+    
+    $keyboard = [
+        ['text' => '📋 Menu', 'callback_data' => 'menu:main'],
+        ['text' => 'ℹ️ Help', 'callback_data' => 'help:info'],
+        ['text' => '👤 Profile', 'callback_data' => 'profile:view'],
+    ];
+    
+    $replyKeyboard = [
+        ['Contact Us', 'About'],
+        ['Settings', 'Help'],
+    ];
+    
+    $bot->sendMessage($chatId, "Welcome, $firstName! 👋\n\nUse the buttons below to navigate.", [
+        'reply_markup' => json_encode(['inline_keyboard' => [$keyboard]]),
+    ]);
+}, ['description' => 'Start the bot']);
 
-        // Handle callback queries (inline button clicks)
-        if ($callbackData) {
-            handleCallback($bot, $callbackId, $callbackData, $chatId);
-            continue;
-        }
+// /help command with alias
+$dispatcher->onCommand('help', function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    
+    $helpText = "📚 **Bot Help**\n\n" .
+                "Available commands:\n" .
+                "/start - Start the bot\n" .
+                "/help - Show this help\n" .
+                "/settings - Bot settings\n" .
+                "/admin - Admin panel (admins only)\n\n" .
+                "You can also use the inline buttons!";
+    
+    $bot->sendMessage($chatId, $helpText, ['parse_mode' => 'Markdown']);
+}, ['aliases' => ['support', 'info'], 'description' => 'Show help information']);
 
-        // Command: /start
-        if ($text === '/start') {
-            $keyboard = Keyboard::inline(
-                Keyboard::inlineRow(
-                    Keyboard::inlineButton('🌐 Visit Website', url: 'https://example.com'),
-                    Keyboard::inlineButton('ℹ️ About', callback_data: 'about')
-                ),
-                Keyboard::inlineRow(
-                    Keyboard::inlineButton('📊 Take Poll', callback_data: 'poll'),
-                    Keyboard::inlineButton('📍 Send Location', callback_data: 'location_request')
-                )
-            );
+// /settings command
+$dispatcher->onCommand('settings', function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    
+    $keyboard = [
+        ['text' => '🔔 Notifications', 'callback_data' => 'settings:notifications'],
+        ['text' => '🌐 Language', 'callback_data' => 'settings:language'],
+        ['text' => '🔒 Privacy', 'callback_data' => 'settings:privacy'],
+    ];
+    
+    $bot->sendMessage($chatId, "⚙️ **Settings**\n\nChoose an option:", [
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode(['inline_keyboard' => [$keyboard]]),
+    ]);
+}, ['description' => 'Open bot settings']);
 
-            $bot->sendMessage(
-                chat_id: $chatId,
-                text: "👋 Welcome! I'm a feature-rich PHP Telegram Bot.\n\n" .
-                      "Use the buttons below to explore my features!",
-                reply_markup: $keyboard
-            );
-        }
-
-        // Command: /admin
-        elseif ($text === '/admin') {
-            // Check if user is admin (implement your logic)
-            $isAdmin = true; 
-            
-            if ($isAdmin) {
-                $keyboard = Keyboard::reply(
-                    Keyboard::replyRow('📢 Broadcast', '👥 Users'),
-                    Keyboard::replyRow('🛑 Stop'),
-                    resize_keyboard: true
-                );
-
-                $bot->sendMessage(
-                    chat_id: $chatId,
-                    text: "🔧 Admin Panel",
-                    reply_markup: $keyboard
-                );
-            } else {
-                $bot->sendMessage(chat_id: $chatId, text: "❌ Access denied.");
-            }
-        }
-
-        // Command: /upload
-        elseif ($text === '/upload') {
-            // Example: Send a local image
-            try {
-                $photo = InputFile::local('path/to/your/image.jpg', 'demo_image.jpg');
-                
-                $bot->sendPhoto(
-                    chat_id: $chatId,
-                    photo: $photo,
-                    caption: "📸 This is a photo uploaded from your server!"
-                );
-            } catch (Exception $e) {
-                $bot->sendMessage(chat_id: $chatId, text: "Error: " . $e->getMessage());
-            }
-        }
-
-        // Command: /media_group
-        elseif ($text === '/media_group') {
-            // Send multiple photos as an album
-            $media = [
-                ['type' => 'photo', 'media' => InputFile::url('https://via.placeholder.com/600x400/FF5733/FFFFFF?text=Image+1'), 'caption' => 'First Image'],
-                ['type' => 'photo', 'media' => InputFile::url('https://via.placeholder.com/600x400/33FF57/FFFFFF?text=Image+2'), 'caption' => 'Second Image'],
-                ['type' => 'photo', 'media' => InputFile::url('https://via.placeholder.com/600x400/3357FF/FFFFFF?text=Image+3')]
-            ];
-
-            $bot->sendMediaGroup(chat_id: $chatId, media: $media);
-        }
-
-        // Command: /quiz
-        elseif ($text === '/quiz') {
-            // Create a quiz poll
-            $bot->sendPoll(
-                chat_id: $chatId,
-                question: "🧠 What is the capital of France?",
-                options: ['London', 'Berlin', 'Paris', 'Madrid'],
-                type: 'quiz',
-                correct_option_id: 2,
-                explanation: "Paris is the capital and most populous city of France."
-            );
-        }
-
-        // State-based conversation example
-        elseif ($userId && isset($userStates[$userId])) {
-            handleState($bot, $userId, $chatId, $text, $userStates);
-        }
+// /admin command (admin only)
+$dispatcher->onCommand('admin', function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    
+    // Check if user is bot admin (you can customize this)
+    $adminIds = [123456789]; // Replace with actual admin IDs
+    
+    if (!in_array($message['from']['id'], $adminIds)) {
+        $bot->sendMessage($chatId, "❌ You don't have permission to use this command.");
+        return;
     }
-}
+    
+    $keyboard = [
+        ['text' => '📊 Statistics', 'callback_data' => 'admin:stats'],
+        ['text' => '📢 Broadcast', 'callback_data' => 'admin:broadcast'],
+        ['text' => '👥 Users', 'callback_data' => 'admin:users'],
+    ];
+    
+    $bot->sendMessage($chatId, "🛡️ **Admin Panel**\n\nSelect an action:", [
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode(['inline_keyboard' => [$keyboard]]),
+    ]);
+}, ['adminOnly' => true, 'description' => 'Admin panel (admins only)']);
 
-/**
- * Handle inline button callbacks
- */
-function handleCallback($bot, $callbackId, $data, $chatId) {
-    switch ($data) {
-        case 'about':
-            $bot->answerCallbackQuery(
-                callback_query_id: $callbackId,
-                text: "I'm a PHP bot built with the Telegram Bot API!",
-                show_alert: false
-            );
-            
-            $bot->sendMessage(
-                chat_id: $chatId,
-                text: "🤖 **About This Bot**\n\n" .
-                      "Built with PHP using a comprehensive Telegram Bot API wrapper.\n\n" .
-                      "✅ 100+ API methods\n" .
-                      "✅ File uploads\n" .
-                      "✅ Keyboards\n" .
-                      "✅ Polls & Quizzes"
-            );
-            break;
-
-        case 'poll':
-            $bot->answerCallbackQuery(callback_query_id: $callbackId, text: "Creating poll...");
-            
-            $bot->sendPoll(
-                chat_id: $chatId,
-                question: "What's your favorite programming language?",
-                options: ['PHP', 'Python', 'JavaScript', 'Go'],
-                is_anonymous: false,
-                allows_multiple_answers: true
-            );
-            break;
-
-        case 'location_request':
-            $bot->answerCallbackQuery(
-                callback_query_id: $callbackId,
-                text: "Please share your location using the attachment button!",
-                show_alert: true
-            );
-            break;
+// /echo command with arguments
+$dispatcher->onCommand('echo', function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $args = explode(' ', trim(substr($message['text'], strpos($message['text'], ' '))));
+    $text = implode(' ', $args);
+    
+    if (empty($text)) {
+        $bot->sendMessage($chatId, "Please provide text to echo.\nUsage: /echo <text>");
+        return;
     }
-}
+    
+    $bot->sendMessage($chatId, "🔊 " . $text);
+}, ['description' => 'Echo back your message']);
 
-/**
- * Handle conversation states
- */
-function handleState($bot, $userId, $chatId, $text, &$userStates) {
-    $state = $userStates[$userId];
+/* =============================================================================
+   CALLBACK QUERY HANDLERS
+   ============================================================================= */
 
-    if ($state === 'waiting_for_name') {
-        $bot->sendMessage(
-            chat_id: $chatId,
-            text: "Nice to meet you, {$text}! 🎉\n\nWhat's your email address?"
-        );
-        $userStates[$userId] = 'waiting_for_email';
-    } 
-    elseif ($state === 'waiting_for_email') {
-        if (filter_var($text, FILTER_VALIDATE_EMAIL)) {
-            $bot->sendMessage(
-                chat_id: $chatId,
-                text: "✅ Registration complete!\n\nName: {$text}\nWe'll be in touch!"
-            );
-            unset($userStates[$userId]);
-        } else {
-            $bot->sendMessage(
-                chat_id: $chatId,
-                text: "❌ Invalid email. Please try again:"
-            );
-        }
+// Main menu callback
+$dispatcher->onCallback('menu:*', function ($callbackQuery, $bot) {
+    $data = $callbackQuery['data'];
+    $chatId = $callbackQuery['message']['chat']['id'];
+    $messageId = $callbackQuery['message']['message_id'];
+    
+    // Answer callback query
+    $bot->answerCallbackQuery($callbackQuery['id'], ['show_alert' => false]);
+    
+    $menuText = "📋 **Main Menu**\n\n" .
+                "• View your profile\n" .
+                "• Change settings\n" .
+                "• Get help\n" .
+                "• Contact support";
+    
+    $keyboard = [
+        ['text' => '👤 My Profile', 'callback_data' => 'profile:view'],
+        ['text' => '⚙️ Settings', 'callback_data' => 'settings:main'],
+        ['text' => '📞 Support', 'callback_data' => 'support:contact'],
+    ];
+    
+    $bot->editMessageText($menuText, $chatId, $messageId, [
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode(['inline_keyboard' => [$keyboard]]),
+    ]);
+});
+
+// Help callback
+$dispatcher->onCallback('help:*', function ($callbackQuery, $bot) {
+    $chatId = $callbackQuery['message']['chat']['id'];
+    
+    $bot->answerCallbackQuery($callbackQuery['id'], [
+        'text' => 'ℹ️ Need help? Contact @support',
+        'show_alert' => true,
+    ]);
+});
+
+// Profile callback
+$dispatcher->onCallback('profile:view', function ($callbackQuery, $bot) {
+    $chatId = $callbackQuery['message']['chat']['id'];
+    $userId = $callbackQuery['from']['id'];
+    $firstName = $callbackQuery['from']['first_name'];
+    $username = $callbackQuery['from']['username'] ?? 'Not set';
+    
+    $bot->answerCallbackQuery($callbackQuery['id']);
+    
+    $profileText = "👤 **Your Profile**\n\n" .
+                   "**ID:** `$userId`\n" .
+                   "**Name:** $firstName\n" .
+                   "**Username:** @$username";
+    
+    $keyboard = [
+        ['text' => '🔄 Refresh', 'callback_data' => 'profile:view'],
+        ['text' => '🔙 Back', 'callback_data' => 'menu:main'],
+    ];
+    
+    $bot->sendMessage($chatId, $profileText, [
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode(['inline_keyboard' => [$keyboard]]),
+    ]);
+});
+
+// Settings callbacks
+$dispatcher->onCallback('settings:*', function ($callbackQuery, $bot) {
+    $data = $callbackQuery['data'];
+    $chatId = $callbackQuery['message']['chat']['id'];
+    
+    $bot->answerCallbackQuery($callbackQuery['id'], [
+        'text' => 'Settings feature coming soon!',
+        'show_alert' => true,
+    ]);
+});
+
+/* =============================================================================
+   MESSAGE HANDLERS WITH FILTERS
+   ============================================================================= */
+
+// Handle messages containing "hello" or "hi"
+$dispatcher->onMessage(function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $bot->sendMessage($chatId, "Hello there! 👋 How can I help you?");
+}, ['contains' => 'hello']);
+
+// Handle photo messages
+$dispatcher->onMessage(function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $bot->sendMessage($chatId, "Nice photo! 📸 Thanks for sharing!");
+}, ['type' => 'photo']);
+
+// Handle messages in private chats only
+$dispatcher->onMessage(function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $bot->sendMessage($chatId, "This is a private message handler.");
+}, ['chat_type' => 'private']);
+
+// Handle document messages
+$dispatcher->onMessage(function ($message, $bot) {
+    $chatId = $message['chat']['id'];
+    $fileName = $message['document']['file_name'] ?? 'unknown';
+    $bot->sendMessage($chatId, "📄 Received document: $fileName");
+}, ['type' => 'document']);
+
+/* =============================================================================
+   EVENT HANDLERS
+   ============================================================================= */
+
+// Listen to all messages
+$dispatcher->onEvent('message', function ($data, $bot) {
+    $message = $data['message'];
+    // Log all messages (in production, use proper logging)
+    error_log("Message from {$message['from']['id']}: " . ($message['text'] ?? '[media]'));
+});
+
+// Listen to edited messages
+$dispatcher->onEvent('edited_message', function ($data, $bot) {
+    $message = $data['edited_message'];
+    $chatId = $message['chat']['id'];
+    $bot->sendMessage($chatId, "✏️ I see you edited your message!");
+});
+
+// Listen to chat member changes
+$dispatcher->onEvent('chat_member', function ($data, $bot) {
+    $chatMember = $data['chat_member'];
+    $chatId = $chatMember['chat']['id'];
+    $newStatus = $chatMember['new_chat_member']['status'];
+    $userId = $chatMember['new_chat_member']['user']['id'];
+    
+    if ($newStatus === 'member') {
+        $bot->sendMessage($chatId, "🎉 Welcome to the group!");
+    } elseif ($newStatus === 'left') {
+        $bot->sendMessage($chatId, "👋 User $userId left the group.");
     }
-}
+});
 
-// Mark updates as read
-if (!empty($updates)) {
-    $lastUpdateId = end($updates)['update_id'];
-    // In production, store this offset properly
-    // $bot->getUpdates(offset: $lastUpdateId + 1);
-}
+/* =============================================================================
+   CONVERSATION EXAMPLE
+   ============================================================================= */
+
+// Start a conversation
+$dispatcher->onCommand('feedback', function ($message, $bot) use (&$conversations) {
+    $chatId = $message['chat']['id'];
+    $userId = $message['from']['id'];
+    
+    // Set conversation state
+    $conversations[$userId] = [
+        'state' => 'waiting_for_feedback',
+        'step' => 1
+    ];
+    
+    $bot->sendMessage($chatId, "📝 Please send us your feedback:\n\n(Type /cancel to cancel)");
+});
+
+// Handle conversation flow
+$dispatcher->onMessage(function ($message, $bot) use (&$conversations) {
+    $userId = $message['from']['id'];
+    $chatId = $message['chat']['id'];
+    
+    if (!isset($conversations[$userId])) {
+        return;
+    }
+    
+    $conversation = $conversations[$userId];
+    
+    // Check for cancel
+    if (isset($message['text']) && $message['text'] === '/cancel') {
+        unset($conversations[$userId]);
+        $bot->sendMessage($chatId, "❌ Conversation cancelled.");
+        return;
+    }
+    
+    if ($conversation['state'] === 'waiting_for_feedback') {
+        // Save feedback (in production, save to database)
+        $feedback = $message['text'] ?? '[media]';
+        
+        unset($conversations[$userId]);
+        
+        $bot->sendMessage($chatId, "✅ Thank you for your feedback!\n\nWe received: \"$feedback\"");
+    }
+}, []);
+
+/* =============================================================================
+   RUN THE BOT
+   ============================================================================= */
+
+echo "🤖 Advanced Bot Starting...\n";
+echo "Commands registered: start, help, settings, admin, echo, feedback\n";
+echo "Press Ctrl+C to stop\n\n";
+
+// Run with long polling
+$dispatcher->run();
