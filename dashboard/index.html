@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Dashboard</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --telegram-blue: #0088cc;
+            --telegram-dark: #1c262f;
+            --sidebar-width: 260px;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--telegram-dark) 0%, #2c3e50 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .sidebar-brand i {
+            font-size: 1.75rem;
+            color: var(--telegram-blue);
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 3px solid var(--telegram-blue);
+        }
+        
+        .sidebar-menu a i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+        
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+        
+        .stat-icon.blue { background: rgba(0,136,204,0.1); color: var(--telegram-blue); }
+        .stat-icon.green { background: rgba(40,167,69,0.1); color: #28a745; }
+        .stat-icon.orange { background: rgba(253,126,20,0.1); color: #fd7e14; }
+        .stat-icon.purple { background: rgba(111,66,193,0.1); color: #6f42c1; }
+        .stat-icon.red { background: rgba(220,53,69,0.1); color: #dc3545; }
+        .stat-icon.cyan { background: rgba(23,162,184,0.1); color: #17a2b8; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        
+        .btn-telegram {
+            background: var(--telegram-blue);
+            color: white;
+            border: none;
+        }
+        
+        .btn-telegram:hover {
+            background: #0077b5;
+            color: white;
+        }
+        
+        .badge-soft {
+            padding: 0.5em 0.75em;
+            font-weight: 500;
+        }
+        
+        .badge-soft-success { background: rgba(40,167,69,0.1); color: #28a745; }
+        .badge-soft-warning { background: rgba(253,126,20,0.1); color: #fd7e14; }
+        .badge-soft-danger { background: rgba(220,53,69,0.1); color: #dc3545; }
+        .badge-soft-info { background: rgba(23,162,184,0.1); color: #17a2b8; }
+        
+        .nav-pills .nav-link {
+            color: #6c757d;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: var(--telegram-blue);
+            color: white;
+        }
+        
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--telegram-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0,136,204,0.25);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-robot"></i>
+            <div>
+                <h5 class="mb-0">Bot Dashboard</h5>
+                <small style="opacity: 0.7;">Telegram Bot Manager</small>
+            </div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="#" class="active" data-section="dashboard">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" data-section="broadcast">
+                <i class="bi bi-broadcast"></i>
+                <span>Broadcast</span>
+            </a>
+            <a href="#" data-section="deeplink">
+                <i class="bi bi-link-45deg"></i>
+                <span>Deep Links</span>
+            </a>
+            <a href="#" data-section="users">
+                <i class="bi bi-people"></i>
+                <span>Users</span>
+            </a>
+            <a href="#" data-section="commands">
+                <i class="bi bi-command"></i>
+                <span>Commands</span>
+            </a>
+            <a href="#" data-section="errors">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Errors</span>
+            </a>
+            <a href="#" data-section="settings">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <button class="btn btn-outline-secondary d-md-none me-2" id="toggleSidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4 class="mb-0" id="pageTitle">Dashboard</h4>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end">
+                    <div class="fw-bold">Bot Name</div>
+                    <small class="text-muted" id="botUsername">@your_bot</small>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="section-dashboard" class="content-section">
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Users</h6>
+                                <h3 class="mb-0" id="statTotalUsers">0</h3>
+                                <small class="text-success" id="statUsersGrowth">
+                                    <i class="bi bi-arrow-up"></i> 0% this week
+                                </small>
+                            </div>
+                            <div class="stat-icon blue">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Active (24h)</h6>
+                                <h3 class="mb-0" id="statActiveUsers">0</h3>
+                                <small class="text-muted">Unique users</small>
+                            </div>
+                            <div class="stat-icon green">
+                                <i class="bi bi-activity"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Messages</h6>
+                                <h3 class="mb-0" id="statMessages">0</h3>
+                                <small class="text-muted">Total received</small>
+                            </div>
+                            <div class="stat-icon orange">
+                                <i class="bi bi-chat-dots"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Success Rate</h6>
+                                <h3 class="mb-0" id="statSuccessRate">0%</h3>
+                                <small class="text-muted">Command success</small>
+                            </div>
+                            <div class="stat-icon purple">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="chart-container">
+                        <h5 class="mb-4"><i class="bi bi-graph-up me-2"></i>User Growth</h5>
+                        <canvas id="userGrowthChart" height="80"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <h5 class="mb-4"><i class="bi bi-pie-chart me-2"></i>Message Types</h5>
+                        <canvas id="messageTypesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Chart -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <h5 class="mb-4"><i class="bi bi-clock-history me-2"></i>Hourly Activity (Today)</h5>
+                        <canvas id="hourlyActivityChart" height="60"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Errors & Top Commands -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-exclamation-triangle me-2"></i>Recent Errors</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Message</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentErrorsTable">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No recent errors</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-trophy me-2"></i>Top Commands</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Command</th>
+                                        <th>Executions</th>
+                                        <th>Avg Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topCommandsTable">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No command data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Broadcast Section -->
+        <div id="section-broadcast" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-plus-circle me-2"></i>Create New Broadcast</h5>
+                        
+                        <form id="broadcastForm">
+                            <div class="mb-3">
+                                <label class="form-label">Message Text</label>
+                                <textarea class="form-control" id="broadcastText" rows="6" placeholder="Enter your broadcast message..."></textarea>
+                                <div class="form-text">HTML formatting is supported</div>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Parse Mode</label>
+                                    <select class="form-select" id="broadcastParseMode">
+                                        <option value="HTML">HTML</option>
+                                        <option value="MarkdownV2">Markdown V2</option>
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Target Audience</label>
+                                    <select class="form-select" id="broadcastTarget">
+                                        <option value="all">All Users</option>
+                                        <option value="active">Active Users (24h)</option>
+                                        <option value="custom">Custom List</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3" id="customChatIdsDiv" style="display: none;">
+                                <label class="form-label">Chat IDs (comma-separated)</label>
+                                <input type="text" class="form-control" id="customChatIds" placeholder="123456789, 987654321">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="broadcastDisableNotification">
+                                    <label class="form-check-label">Send without notification</label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-send me-2"></i>Start Broadcast
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-list-task me-2"></i>Broadcast History</h5>
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Success/Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="broadcastHistoryTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Deep Links Section -->
+        <div id="section-deeplink" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-plus-circle me-2"></i>Create Deep Link</h5>
+                        
+                        <form id="deepLinkForm">
+                            <div class="mb-3">
+                                <label class="form-label">Link Type</label>
+                                <select class="form-select" id="deepLinkType">
+                                    <option value="static">Static Link</option>
+                                    <option value="dynamic">Dynamic Link</option>
+                                    <option value="referral">Referral Link</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3" id="staticParamDiv">
+                                <label class="form-label">Parameter</label>
+                                <input type="text" class="form-control" id="deepLinkParam" placeholder="promo_summer" pattern="[A-Za-z0-9_-]{1,64}">
+                                <div class="form-text">Only A-Z, a-z, 0-9, _, - allowed (max 64 chars)</div>
+                            </div>
+                            
+                            <div class="mb-3" id="dynamicDataDiv" style="display: none;">
+                                <label class="form-label">Data (JSON)</label>
+                                <textarea class="form-control" id="deepLinkData" rows="3" placeholder='{"product_id": 123}'></textarea>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Max Uses (optional)</label>
+                                    <input type="number" class="form-control" id="deepLinkMaxUses" placeholder="Unlimited">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Expires At</label>
+                                    <input type="datetime-local" class="form-control" id="deepLinkExpires">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-link me-2"></i>Generate Link
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-list-ul me-2"></i>Active Links</h5>
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Uses</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deepLinksTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Section -->
+        <div id="section-users" class="content-section d-none">
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>All Users</h5>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control" id="userSearch" placeholder="Search users..." style="width: 250px;">
+                        <button class="btn btn-outline-secondary" onclick="loadUsers()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Messages</th>
+                                <th>Last Seen</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Commands Section -->
+        <div id="section-commands" class="content-section d-none">
+            <div class="table-container">
+                <h5 class="mb-4"><i class="bi bi-command me-2"></i>Command Statistics</h5>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Command</th>
+                                <th>Total Executions</th>
+                                <th>Successes</th>
+                                <th>Failures</th>
+                                <th>Success Rate</th>
+                                <th>Avg Time (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commandsStatsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Errors Section -->
+        <div id="section-errors" class="content-section d-none">
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Error Log</h5>
+                    <button class="btn btn-outline-danger" onclick="clearErrors()">
+                        <i class="bi bi-trash me-2"></i>Clear Old Errors
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Message</th>
+                                <th>User</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="errorsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Section -->
+        <div id="section-settings" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-sliders me-2"></i>Bot Settings</h5>
+                        
+                        <form id="settingsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Bot Token</label>
+                                <input type="password" class="form-control" id="settingBotToken" value="YOUR_BOT_TOKEN_HERE">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Admin User IDs (comma-separated)</label>
+                                <input type="text" class="form-control" id="settingAdminIds" value="123456789">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Database Path</label>
+                                <input type="text" class="form-control" id="settingDbPath" value="./bot_database.sqlite" readonly>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Log Level</label>
+                                <select class="form-select" id="settingLogLevel">
+                                    <option value="DEBUG">Debug</option>
+                                    <option value="INFO" selected>Info</option>
+                                    <option value="WARNING">Warning</option>
+                                    <option value="ERROR">Error</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-save me-2"></i>Save Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-hdd-stack me-2"></i>Data Management</h5>
+                        
+                        <div class="mb-4">
+                            <h6>Export Data</h6>
+                            <p class="text-muted">Download statistics and analytics data as JSON.</p>
+                            <button class="btn btn-outline-primary" onclick="exportData()">
+                                <i class="bi bi-download me-2"></i>Export Statistics
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Cleanup Old Data</h6>
+                            <p class="text-muted">Remove statistics older than specified days.</p>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="number" class="form-control" id="cleanupDays" value="90" min="1">
+                                <button class="btn btn-outline-danger" onclick="cleanupData()">
+                                    <i class="bi bi-trash me-2"></i>Cleanup
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h6>Cache Management</h6>
+                            <p class="text-muted">Clear cached data to free up space.</p>
+                            <button class="btn btn-outline-warning" onclick="clearCache()">
+                                <i class="bi bi-x-circle me-2"></i>Clear Cache
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-bell me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dashboard JavaScript -->
+    <script src="assets/dashboard.js"></script>
+</body>
+</html>
