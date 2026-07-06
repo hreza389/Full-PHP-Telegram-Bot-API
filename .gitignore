@@ -1,32 +1,7 @@
-```php
-# Dependencies
-vendor/
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-
-# Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Build artifacts
-build/
-dist/
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
 *.o
 *.obj
 *.exe
@@ -34,33 +9,41 @@ dist/
 *.so
 *.a
 *.out
-*.class
 
-# Python specific
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
+# Dependencies
 .venv/
-.mypy_cache/
-.pytest_cache/
-.coverage
-coverage/
-
-# Node.js specific
+venv/
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Java specific
+dist/
+build/
 target/
 .gradle/
-*.war
-*.jar
+.mypy_cache/
+.pytest_cache/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
 # Compressed files
 *.zip
