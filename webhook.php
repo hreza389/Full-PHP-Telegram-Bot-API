@@ -1,78 +1,96 @@
 <?php
+
 /**
- * Webhook handler example for Telegram Bot
+ * Telegram Bot Webhook Handler
  * 
- * This file should be set as your webhook URL in Telegram.
- * Configure it with: $bot->setWebhook('https://your-domain.com/webhook.php');
+ * Handles incoming webhook updates from Telegram.
  */
 
-require_once 'TelegramBot.php';
+// Error reporting (disable in production)
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
 
-// Replace with your actual bot token from @BotFather
-$botToken = 'YOUR_BOT_TOKEN_HERE';
+define('BASE_PATH', __DIR__);
 
-// Initialize the bot
-$bot = new TelegramBot($botToken);
-
-// Get the update from POST data
-$update = json_decode(file_get_contents('php://input'), true);
-
-if ($update) {
-    // Handle messages
-    if (isset($update['message'])) {
-        $chatId = $update['message']['chat']['id'];
-        $text = $update['message']['text'] ?? '';
-        
-        // Show typing action
-        $bot->sendChatAction($chatId, 'typing');
-        
-        // Command handling
-        switch ($text) {
-            case '/start':
-                // Send message with inline keyboard
-                $inlineKeyboard = [
-                    [['text' => 'Button 1', 'callback_data' => 'btn1']],
-                    [['text' => 'Button 2', 'callback_data' => 'btn2']]
-                ];
-                $bot->sendMessageWithInlineKeyboard(
-                    $chatId,
-                    "Welcome! Choose an option:",
-                    $inlineKeyboard
-                );
-                break;
-                
-            case '/help':
-                $bot->sendMessage(
-                    $chatId,
-                    "Available commands:\n/start - Start the bot\n/help - Show this help\n/photo - Send a photo demo",
-                    'Markdown'
-                );
-                break;
-                
-            case '/photo':
-                // You would need a valid photo path or URL here
-                // $bot->sendPhoto($chatId, '/path/to/photo.jpg', 'Here is a photo!');
-                $bot->sendMessage($chatId, "Photo feature - configure the path in webhook.php");
-                break;
-                
-            default:
-                $bot->sendMessage($chatId, "You said: " . $text);
-        }
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'TelegramBot\\';
+    $baseDir = BASE_PATH . '/src/';
+    
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
     }
     
-    // Handle callback queries
-    if (isset($update['callback_query'])) {
-        $callbackQueryId = $update['callback_query']['id'];
-        $data = $update['callback_query']['data'] ?? '';
-        
-        $bot->answerCallbackQuery($callbackQueryId, "You clicked: " . $data);
-        
-        if (isset($update['callback_query']['message'])) {
-            $chatId = $update['callback_query']['message']['chat']['id'];
-            $bot->sendMessage($chatId, "Callback received: " . $data);
-        }
+    $relativeClass = substr($class, $len);
+    $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+    
+    if (file_exists($file)) {
+        require $file;
     }
+});
+
+use TelegramBot\Core\Config;
+use TelegramBot\Core\Logger;
+use TelegramBot\Database\Database;
+use TelegramBot\Bot\TelegramBot;
+
+// Load configuration
+$config = require BASE_PATH . '/config/config.php';
+
+// Initialize database
+$db = new Database($config['database']);
+
+// Initialize logger
+$logger = new Logger();
+$logger->setDatabase($db);
+
+// Get update data
+$update = json_decode(file_get_contents('php://input'), true);
+
+if (!$update) {
+    http_response_code(400);
+    exit('Invalid update');
 }
 
-// Return empty response to Telegram
+// Log the update
+$logger->logUpdate($update);
+
+// Save update to database
+if (isset($update['update_id'])) {
+    $db->insert('updates', [
+        'update_id' => $update['update_id'],
+        'update_data' => json_encode($update),
+    ]);
+}
+
+// Extract chat and user info for logging/storage
+$chatId = null;
+$userId = null;
+
+if (isset($update['message']['chat']['id'])) {
+    $chatId = $update['message']['chat']['id'];
+} elseif (isset($update['callback_query']['message']['chat']['id'])) {
+    $chatId = $update['callback_query']['message']['chat']['id'];
+}
+
+if (isset($update['message']['from']['id'])) {
+    $userId = $update['message']['from']['id'];
+} elseif (isset($update['callback_query']['from']['id'])) {
+    $userId = $update['callback_query']['from']['id'];
+}
+
+// Store user and chat if available
+if ($userId && isset($update['message']['from'])) {
+    $db->saveUser($update['message']['from']);
+}
+
+if ($chatId && isset($update['message']['chat'])) {
+    $db->saveChat($update['message']['chat']);
+}
+
+// Here you would add your bot logic
+// For now, we just acknowledge the update
+
 http_response_code(200);
+echo 'OK';
