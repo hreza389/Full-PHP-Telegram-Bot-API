@@ -1,200 +1,340 @@
 <?php
+
 /**
- * Modern Bot Example & Integration Guide
+ * Telegram Bot Example - Modern Usage
  * 
- * This file demonstrates how to use the refactored Telegram Bot Framework.
- * It covers: Database, Logging, Webhooks, Payments, and Admin Controls.
+ * This file demonstrates how to use the modern TelegramBot library
+ * with MySQL database, webhook control, payments, and more.
  * 
- * Usage:
- * 1. Configure config/config.php
- * 2. Run this file via CLI or Browser to test components
- * 3. Set webhook via: php bot_example.php set_webhook
+ * @package TelegramBot\Examples
+ * @version 2.0.0
  */
 
-// Autoloader for the new structure
-require_once __DIR__ . '/src/Core/Config.php';
-require_once __DIR__ . '/src/Core/Logger.php';
-require_once __DIR__ . '/src/Database/Database.php';
-require_once __DIR__ . '/src/Bot/TelegramBot.php';
+// Autoload classes (adjust path as needed)
+require_once __DIR__ . '/vendor/autoload.php';
 
-use App\Core\Config;
-use App\Core\Logger;
-use App\Database\Database;
-use App\Bot\TelegramBot;
+use TelegramBot\Bot\TelegramBot;
+use TelegramBot\Core\Config;
+use TelegramBot\Core\Logger;
+use TelegramBot\Database\Database;
 
-// Initialize Configuration
-$config = new Config(__DIR__ . '/config/config.php');
+// ============================================================================
+// EXAMPLE 1: BASIC BOT SETUP WITH LONG POLLING
+// ============================================================================
 
-// Initialize Logger
-$logger = new Logger($config->get('logging'));
+echo "=== Example 1: Basic Bot Setup ===\n\n";
 
-// Initialize Database (MySQL)
+// Load configuration
+Config::load(__DIR__ . '/config/config.php');
+
+// Get bot token from config or environment
+$botToken = Config::get('bots.default_token') ?: getenv('TELEGRAM_BOT_TOKEN');
+
+if (!$botToken) {
+    die("Error: Bot token not configured!\n");
+}
+
+// Create bot instance
+$bot = new TelegramBot($botToken);
+
+// Test the bot
+$me = $bot->getMe();
+if ($me && isset($me['ok']) && $me['ok']) {
+    echo "✓ Bot connected: @{$me['result']['username']}\n";
+    echo "  Name: {$me['result']['first_name']}\n";
+    echo "  ID: {$me['result']['id']}\n\n";
+} else {
+    die("✗ Failed to connect to Telegram API\n");
+}
+
+// ============================================================================
+// EXAMPLE 2: DATABASE CONNECTION & SETUP
+// ============================================================================
+
+echo "=== Example 2: Database Connection ===\n\n";
+
 try {
-    $db = new Database($config->get('database'));
-    $logger->info('Database connection established successfully.');
-} catch (Exception $e) {
-    die("Database Connection Failed: " . $e->getMessage());
-}
-
-// Get Active Bot from Database (Controlled via Admin Panel)
-$activeBot = $db->getActiveBot();
-
-if (!$activeBot) {
-    $logger->warning('No active bot found. Please add a bot token in the Control Panel.');
-    die("No active bot configured. Go to Control Panel > Bots to add one.");
-}
-
-// Initialize Telegram Bot Client
-$bot = new TelegramBot($activeBot['token'], $logger);
-
-echo "=== Modern Bot Framework Example ===\n";
-echo "Bot: @" . $activeBot['username'] . "\n";
-echo "Database: MySQL (" . $config->get('database')['database'] . ")\n";
-echo "Log Path: " . $config->get('logging')['path'] . "\n\n";
-
-// Handle CLI Commands for Demonstration
-$action = $_SERVER['argv'][1] ?? 'help';
-
-switch ($action) {
-    case 'set_webhook':
-        // Example: Setting Webhook via CLI
-        $webhookUrl = $config->get('bot_settings')['webhook_url'] ?? '';
-        if (empty($webhookUrl)) {
-            echo "Error: Webhook URL not set in config.\n";
-            exit(1);
-        }
-        
-        echo "Setting webhook to: $webhookUrl\n";
-        $result = $bot->setWebhook($webhookUrl);
-        
-        if ($result['ok']) {
-            echo "Success: Webhook set!\n";
-            $db->updateBotStatus($activeBot['id'], ['webhook_status' => 'active']);
-        } else {
-            echo "Failed: " . ($result['description'] ?? 'Unknown error') . "\n";
-        }
-        break;
-
-    case 'delete_webhook':
-        echo "Deleting webhook...\n";
-        $result = $bot->deleteWebhook();
-        if ($result['ok']) {
-            echo "Success: Webhook deleted.\n";
-            $db->updateBotStatus($activeBot['id'], ['webhook_status' => 'inactive']);
-        }
-        break;
-
-    case 'test_payment':
-        // Example: Creating a Payment Invoice
-        echo "Testing Payment Invoice creation...\n";
-        $title = "Premium Subscription";
-        $description = "1 Month Access to Premium Features";
-        $payload = "user_123_upgrade";
-        $providerToken = $config->get('payment')['provider_token'] ?? ''; // Stripe/Yookassa etc.
-        $currency = "USD";
-        $prices = [
-            ['label' => 'Subscription', 'amount' => 999], // $9.99
-            ['label' => 'Tax', 'amount' => 100]
-        ];
-
-        if (empty($providerToken)) {
-            echo "Warning: Provider Token missing in config. Using dummy mode.\n";
-        }
-
-        // Note: This requires a chat_id to send. Usually triggered by user command.
-        // Here we just demonstrate the method availability.
-        echo "Invoice Payload Prepared: $payload\n";
-        echo "Amount: 9.99 $currency\n";
-        echo "To send this, use: \$bot->sendInvoice(\$chatId, ...)\n";
-        break;
-
-    case 'stats':
-        // Display System Stats from DB
-        $stats = $db->getStatistics();
-        echo "--- System Statistics ---\n";
-        echo "Total Users: " . ($stats['users'] ?? 0) . "\n";
-        echo "Total Chats: " . ($stats['chats'] ?? 0) . "\n";
-        echo "Total Updates Processed: " . ($stats['updates'] ?? 0) . "\n";
-        echo "Active Bots: " . ($stats['active_bots'] ?? 0) . "\n";
-        break;
-
-    case 'clean_logs':
-        // Trigger log rotation/cleanup
-        echo "Rotating logs...\n";
-        $logger->rotate();
-        echo "Done.\n";
-        break;
-
-    case 'help':
-    default:
-        echo "Available Commands:\n";
-        echo "  php bot_example.php set_webhook   - Set webhook URL\n";
-        echo "  php bot_example.php delete_webhook- Remove webhook\n";
-        echo "  php bot_example.php test_payment  - Test invoice generation\n";
-        echo "  php bot_example.php stats         - Show DB statistics\n";
-        echo "  php bot_example.php clean_logs    - Rotate log files\n";
-        echo "\nWeb Interface:\n";
-        echo "  Visit /dashboard/ for Control Panel (Admin, Bots, Webhooks, Payments)\n";
-        break;
-}
-
-/**
- * EXAMPLE: How to handle updates in webhook.php or long-polling loop
- * Uncomment below to see logic structure
- */
-/*
-function handleUpdate($update, $db, $bot, $logger) {
-    $logger->info('Processing update', ['update_id' => $update['update_id']]);
-
-    // Save update to DB
-    $db->saveUpdate($update);
-
-    if (isset($update['message'])) {
-        $message = $update['message'];
-        $chatId = $message['chat']['id'];
-        $text = $message['text'] ?? '';
-        $userId = $message['from']['id'];
-
-        // Save/User Tracking
-        $db->saveUser($userId, $message['from']);
-        $db->saveChat($chatId, $message['chat']);
-
-        // Command Router
-        if ($text === '/start') {
-            $bot->sendMessage($chatId, "Welcome! Use /pay to test payments.");
-        } 
-        elseif ($text === '/pay') {
-            // Payment Example
-            $bot->sendInvoice($chatId, [
-                'title' => 'Test Product',
-                'description' => 'Description here',
-                'payload' => 'order_123',
-                'provider_token' => getenv('PAYMENT_TOKEN'),
-                'currency' => 'USD',
-                'prices' => [['label' => 'Item', 'amount' => 500]]
-            ]);
-        }
-        elseif ($text === '/admin') {
-            // Check Admin Role from DB
-            if ($db->isAdmin($userId)) {
-                $bot->sendMessage($chatId, "Welcome Admin! Visit /dashboard for full control.");
-            } else {
-                $bot->sendMessage($chatId, "Access Denied.");
-            }
-        }
-    }
+    // Initialize database (auto-creates tables if needed)
+    $db = new Database(
+        Config::get('database.host'),
+        Config::get('database.name'),
+        Config::get('database.user'),
+        Config::get('database.password'),
+        Config::get('database.port', 3306)
+    );
     
-    // Handle Pre-checkout query (Payment Success)
-    if (isset($update['pre_checkout_query'])) {
-        $bot->answerPreCheckoutQuery($update['pre_checkout_query']['id'], true);
-    }
+    echo "✓ Database connected: " . Config::get('database.name') . "\n";
+    echo "  Tables created/verified successfully\n\n";
     
-    // Handle Successful Payment
-    if (isset($update['successful_payment'])) {
-        $logger->alert('Payment Received', $update['successful_payment']);
-        // Grant user access here
-    }
+    // Save bot info to database
+    $botId = $db->saveBot($botToken, $me['result']['username']);
+    echo "✓ Bot saved to database with ID: {$botId}\n\n";
+    
+} catch (\Exception $e) {
+    echo "✗ Database error: " . $e->getMessage() . "\n\n";
 }
-*/
 
-echo "\nExecution finished.\n";
+// ============================================================================
+// EXAMPLE 3: WEBHOOK CONFIGURATION
+// ============================================================================
+
+echo "=== Example 3: Webhook Configuration ===\n\n";
+
+$webhookUrl = 'https://your-domain.com/webhook.php';
+
+// Set webhook with options
+$webhookSet = $bot->setWebhook($webhookUrl, [
+    'allowed_updates' => ['message', 'callback_query', 'inline_query'],
+    'max_connections' => 40,
+    'drop_pending_updates' => true
+]);
+
+if ($webhookSet) {
+    echo "✓ Webhook set successfully\n";
+    
+    // Get webhook info
+    $webhookInfo = $bot->getWebhookInfo();
+    if ($webhookInfo && isset($webhookInfo['result'])) {
+        echo "  URL: " . ($webhookInfo['result']['url'] ?? 'Not set') . "\n";
+        echo "  Has custom certificate: " . ($webhookInfo['result']['has_custom_certificate'] ? 'Yes' : 'No') . "\n";
+        echo "  Pending updates: " . ($webhookInfo['result']['pending_update_count'] ?? 0) . "\n";
+        echo "  Max connections: " . ($webhookInfo['result']['max_connections'] ?? 40) . "\n";
+    }
+    echo "\n";
+} else {
+    echo "✗ Failed to set webhook\n\n";
+}
+
+// To delete webhook:
+// $bot->deleteWebhook();
+
+// ============================================================================
+// EXAMPLE 4: SENDING MESSAGES
+// ============================================================================
+
+echo "=== Example 4: Sending Messages ===\n\n";
+
+$chatId = 123456789; // Replace with actual chat ID
+
+// Send simple text message
+$result = $bot->sendMessage($chatId, "Hello! This is a test message.");
+if ($result && isset($result['ok']) && $result['ok']) {
+    echo "✓ Message sent (ID: {$result['result']['message_id']})\n";
+}
+
+// Send message with Markdown formatting
+$bot->sendMessage($chatId, "*Bold text*\n_Italic text_\n`Code`\n[Link](https://example.com)", [
+    'parse_mode' => TelegramBot::PARSE_MARKDOWN
+]);
+echo "✓ Markdown message sent\n";
+
+// Send message with HTML formatting
+$bot->sendMessage($chatId, "<b>Bold</b>\n<i>Italic</i>\n<a href='https://example.com'>Link</a>", [
+    'parse_mode' => TelegramBot::PARSE_HTML
+]);
+echo "✓ HTML message sent\n";
+
+// Send message with reply keyboard
+$keyboard = $bot->buildReplyKeyboard([
+    [$bot->keyboardButton('📍 Send Location', false, true)],
+    [$bot->keyboardButton('📞 Send Contact', true)]
+], false, true);
+
+$bot->sendMessage($chatId, "Please share your location or contact:", [
+    'reply_markup' => $keyboard
+]);
+echo "✓ Message with reply keyboard sent\n";
+
+// Send message with inline keyboard
+$inlineKeyboard = $bot->buildInlineKeyboard([
+    [
+        $bot->inlineButton('🌐 Website', 'https://example.com'),
+        $bot->inlineButton('📱 Telegram', 'https://t.me/example')
+    ],
+    [
+        $bot->inlineButton('ℹ️ Info', 'callback_info'),
+        $bot->inlineButton('⚙️ Settings', 'callback_settings')
+    ]
+]);
+
+$bot->sendMessage($chatId, "Choose an option:", [
+    'reply_markup' => $inlineKeyboard
+]);
+echo "✓ Message with inline keyboard sent\n\n";
+
+// ============================================================================
+// EXAMPLE 5: SENDING MEDIA
+// ============================================================================
+
+echo "=== Example 5: Sending Media ===\n\n";
+
+// Send photo by URL
+$bot->sendPhoto($chatId, 'https://picsum.photos/800/600.jpg', [
+    'caption' => 'Random photo from Picsum',
+    'parse_mode' => TelegramBot::PARSE_HTML
+]);
+echo "✓ Photo sent\n";
+
+// Send document
+$bot->sendDocument($chatId, 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', [
+    'caption' => 'Sample PDF document'
+]);
+echo "✓ Document sent\n";
+
+// Send media group (multiple photos/videos)
+$mediaGroup = [
+    ['type' => 'photo', 'media' => 'https://picsum.photos/800/600.jpg?random=1', 'caption' => 'Photo 1'],
+    ['type' => 'photo', 'media' => 'https://picsum.photos/800/600.jpg?random=2', 'caption' => 'Photo 2'],
+    ['type' => 'photo', 'media' => 'https://picsum.photos/800/600.jpg?random=3', 'caption' => 'Photo 3']
+];
+
+$bot->sendMediaGroup($chatId, $mediaGroup);
+echo "✓ Media group sent\n\n";
+
+// ============================================================================
+// EXAMPLE 6: CHAT MANAGEMENT
+// ============================================================================
+
+echo "=== Example 6: Chat Management ===\n\n";
+
+$groupId = -123456789; // Replace with actual group ID
+
+// Get chat info
+$chat = $bot->getChat($groupId);
+if ($chat) {
+    echo "✓ Chat info retrieved:\n";
+    echo "  Title: {$chat['title']}\n";
+    echo "  Type: {$chat['type']}\n";
+    echo "  Members: {$chat['members_count']}\n";
+}
+
+// Export invite link
+$inviteLink = $bot->exportChatInviteLink($groupId);
+if ($inviteLink) {
+    echo "✓ Invite link: {$inviteLink}\n";
+}
+
+// Create invite link with options
+$newInviteLink = $bot->createChatInviteLink($groupId, [
+    'name' => 'Special Invitation',
+    'expire_date' => time() + 86400, // 24 hours
+    'member_limit' => 10,
+    'creates_join_request' => true
+]);
+if ($newInviteLink) {
+    echo "✓ New invite link created: {$newInviteLink['invite_link']}\n";
+}
+
+echo "\n";
+
+// ============================================================================
+// EXAMPLE 7: PAYMENTS (INVOICES)
+// ============================================================================
+
+echo "=== Example 7: Payments ===\n\n";
+
+$providerToken = Config::get('payments.provider_token'); // Your payment provider token
+
+if ($providerToken) {
+    // Define prices
+    $prices = [
+        ['label' => 'Product', 'amount' => 10000], // 100.00 in currency minor units
+        ['label' => 'Tax', 'amount' => 2000],      // 20.00
+        ['label' => 'Shipping', 'amount' => 500]   // 5.00
+    ];
+
+    // Send invoice
+    $invoice = $bot->sendInvoice(
+        $chatId,
+        'Premium Subscription',
+        'Get access to premium features for 1 month',
+        'payload_12345', // Bot-defined payload
+        $providerToken,
+        'USD',
+        $prices,
+        [
+            'need_name' => true,
+            'need_email' => true,
+            'need_phone_number' => true,
+            'is_flexible' => true
+        ]
+    );
+
+    if ($invoice && isset($invoice['ok']) && $invoice['ok']) {
+        echo "✓ Invoice sent successfully\n";
+    }
+} else {
+    echo "⚠ Payment provider token not configured\n";
+}
+
+echo "\n";
+
+// ============================================================================
+// EXAMPLE 8: LOGGING
+// ============================================================================
+
+echo "=== Example 8: Logging ===\n\n";
+
+try {
+    $logger = new Logger();
+    $logger->info('Bot started', ['bot_id' => $me['result']['id']]);
+    echo "✓ Log entry created\n";
+    
+    $logger->debug('Debug information', ['data' => ['key' => 'value']]);
+    echo "✓ Debug log created\n";
+    
+    $logger->warning('Warning message', ['context' => 'test']);
+    echo "✓ Warning log created\n";
+    
+    $logger->error('Error occurred', ['error_code' => 500]);
+    echo "✓ Error log created\n";
+    
+} catch (\Exception $e) {
+    echo "✗ Logger error: " . $e->getMessage() . "\n";
+}
+
+echo "\n";
+
+// ============================================================================
+// EXAMPLE 9: HELPER METHODS
+// ============================================================================
+
+echo "=== Example 9: Helper Methods ===\n\n";
+
+// Simulate an update for demonstration
+$simulatedUpdate = [
+    'update_id' => 12345,
+    'message' => [
+        'message_id' => 999,
+        'from' => [
+            'id' => 123456,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'username' => 'johndoe',
+            'language_code' => 'en'
+        ],
+        'chat' => [
+            'id' => 123456,
+            'type' => 'private'
+        ],
+        'text' => 'Hello bot!'
+    ]
+];
+
+$bot->setUpdate($simulatedUpdate);
+
+echo "Update type: " . $bot->getUpdateType() . "\n";
+echo "Message type: " . $bot->getMessageType() . "\n";
+echo "Text: " . $bot->text() . "\n";
+echo "Chat ID: " . $bot->chatId() . "\n";
+echo "User ID: " . $bot->userId() . "\n";
+echo "First name: " . $bot->firstName() . "\n";
+echo "Last name: " . $bot->lastName() . "\n";
+echo "Username: " . $bot->username() . "\n";
+echo "Language: " . $bot->languageCode() . "\n";
+echo "Is private: " . ($bot->isPrivate() ? 'Yes' : 'No') . "\n";
+echo "Is group: " . ($bot->isGroup() ? 'Yes' : 'No') . "\n";
+echo "Is channel: " . ($bot->isChannel() ? 'Yes' : 'No') . "\n";
+
+echo "\n";
+echo "=== All Examples Completed ===\n";
