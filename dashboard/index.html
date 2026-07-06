@@ -206,6 +206,22 @@
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
+            <a href="#" data-section="bots">
+                <i class="bi bi-robot"></i>
+                <span>Bot APIs</span>
+            </a>
+            <a href="#" data-section="webhooks">
+                <i class="bi bi-wifi"></i>
+                <span>Webhooks</span>
+            </a>
+            <a href="#" data-section="payments">
+                <i class="bi bi-credit-card"></i>
+                <span>Payments</span>
+            </a>
+            <a href="#" data-section="admins">
+                <i class="bi bi-person-badge"></i>
+                <span>Admin Users</span>
+            </a>
             <a href="#" data-section="broadcast">
                 <i class="bi bi-broadcast"></i>
                 <span>Broadcast</span>
@@ -222,9 +238,9 @@
                 <i class="bi bi-command"></i>
                 <span>Commands</span>
             </a>
-            <a href="#" data-section="errors">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span>Errors</span>
+            <a href="#" data-section="logs">
+                <i class="bi bi-file-text"></i>
+                <span>Logs</span>
             </a>
             <a href="#" data-section="settings">
                 <i class="bi bi-gear"></i>
@@ -403,6 +419,348 @@
             </div>
         </div>
         
+        <!-- Bot APIs Section -->
+        <div id="section-bots" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-plus-circle me-2"></i>Add New Bot</h5>
+                        <form id="addBotForm">
+                            <div class="mb-3">
+                                <label class="form-label">Bot Token</label>
+                                <input type="text" class="form-control" id="botToken" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" required>
+                                <small class="text-muted">Get from @BotFather</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Bot Username (optional)</label>
+                                <input type="text" class="form-control" id="botUsernameInput" placeholder="@mybot">
+                            </div>
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-plus-circle me-2"></i>Add Bot
+                            </button>
+                        </form>
+                        <div id="addBotResult" class="mt-3"></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-list me-2"></i>Active Bots</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="botsTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Loading bots...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Webhooks Section -->
+        <div id="section-webhooks" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-wifi me-2"></i>Webhook Configuration</h5>
+                        <form id="webhookForm">
+                            <div class="mb-3">
+                                <label class="form-label">Webhook URL</label>
+                                <input type="url" class="form-control" id="webhookUrl" placeholder="https://yourdomain.com/webhook.php" required>
+                                <small class="text-muted">Must be HTTPS and publicly accessible</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Secret Token (optional)</label>
+                                <input type="text" class="form-control" id="webhookSecret" placeholder="Random secret for verification">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Allowed Updates</label>
+                                <select class="form-select" id="allowedUpdates" multiple>
+                                    <option value="message">Messages</option>
+                                    <option value="callback_query">Callback Queries</option>
+                                    <option value="inline_query">Inline Queries</option>
+                                    <option value="channel_post">Channel Posts</option>
+                                    <option value="edited_message">Edited Messages</option>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-telegram">
+                                    <i class="bi bi-check-circle me-2"></i>Set Webhook
+                                </button>
+                                <button type="button" id="deleteWebhookBtn" class="btn btn-outline-danger">
+                                    <i class="bi bi-x-circle me-2"></i>Delete Webhook
+                                </button>
+                                <button type="button" id="checkWebhookBtn" class="btn btn-outline-info">
+                                    <i class="bi bi-info-circle me-2"></i>Check Status
+                                </button>
+                            </div>
+                        </form>
+                        <div id="webhookStatus" class="mt-4 p-3 bg-light rounded d-none">
+                            <h6>Current Webhook Status:</h6>
+                            <pre id="webhookStatusContent" class="mb-0"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-info-circle me-2"></i>Webhook Info</h5>
+                        <div id="webhookInfo">
+                            <p class="text-muted">Set a webhook to receive real-time updates from Telegram.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check text-success me-2"></i>HTTPS Required</li>
+                                <li><i class="bi bi-check text-success me-2"></i>Valid SSL Certificate</li>
+                                <li><i class="bi bi-check text-success me-2"></i>Publicly Accessible</li>
+                                <li><i class="bi bi-x text-danger me-2"></i>No localhost URLs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payments Section -->
+        <div id="section-payments" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-credit-card me-2"></i>Payment Provider Settings</h5>
+                        <form id="paymentSettingsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Provider</label>
+                                <select class="form-select" id="paymentProvider">
+                                    <option value="stripe">Stripe</option>
+                                    <option value="yookassa">YooKassa</option>
+                                    <option value="payme">Payme</option>
+                                    <option value="click">Click</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Provider Token</label>
+                                <input type="password" class="form-control" id="providerToken" placeholder="Provider token from payment gateway">
+                                <small class="text-muted">Stored securely in database</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Currency</label>
+                                <select class="form-select" id="paymentCurrency">
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="RUB">RUB - Russian Ruble</option>
+                                    <option value="UZS">UZS - Uzbek Som</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-save me-2"></i>Save Payment Settings
+                            </button>
+                        </form>
+                        <div id="paymentSettingsResult" class="mt-3"></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-receipt me-2"></i>Test Invoice</h5>
+                        <form id="testInvoiceForm">
+                            <div class="mb-3">
+                                <label class="form-label">Chat ID (for testing)</label>
+                                <input type="text" class="form-control" id="testChatId" placeholder="Your Telegram Chat ID" required>
+                                <small class="text-muted">Get from @userinfobot</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Product Title</label>
+                                <input type="text" class="form-control" id="invoiceTitle" value="Premium Subscription" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="invoiceDescription" rows="2">1 Month access to premium features</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Amount (in cents/smallest unit)</label>
+                                <input type="number" class="form-control" id="invoiceAmount" value="999" required>
+                            </div>
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-send me-2"></i>Send Test Invoice
+                            </button>
+                        </form>
+                        <div id="testInvoiceResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-4 mt-2">
+                <div class="col-12">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Payload</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No transactions yet</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Users Section -->
+        <div id="section-admins" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-person-plus me-2"></i>Add Admin User</h5>
+                        <form id="addAdminForm">
+                            <div class="mb-3">
+                                <label class="form-label">Telegram User ID</label>
+                                <input type="number" class="form-control" id="adminUserId" placeholder="123456789" required>
+                                <small class="text-muted">Numeric Telegram user ID</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="adminUsername" placeholder="@username">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="adminFullName" placeholder="John Doe">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Permissions</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permBots" checked>
+                                    <label class="form-check-label" for="permBots">Manage Bots</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permWebhooks" checked>
+                                    <label class="form-check-label" for="permWebhooks">Manage Webhooks</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permPayments" checked>
+                                    <label class="form-check-label" for="permPayments">Manage Payments</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permBroadcast" checked>
+                                    <label class="form-check-label" for="permBroadcast">Send Broadcasts</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permUsers" checked>
+                                    <label class="form-check-label" for="permUsers">View Users</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="permSettings" checked>
+                                    <label class="form-check-label" for="permSettings">Change Settings</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-telegram">
+                                <i class="bi bi-person-plus me-2"></i>Add Admin
+                            </button>
+                        </form>
+                        <div id="addAdminResult" class="mt-3"></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-people me-2"></i>Admin Users List</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Name</th>
+                                        <th>Permissions</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminsTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Loading admins...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logs Section -->
+        <div id="section-logs" class="content-section d-none">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="table-container">
+                        <h5 class="mb-4"><i class="bi bi-file-text me-2"></i>System Logs</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Log Level</label>
+                                <select class="form-select" id="logLevelFilter">
+                                    <option value="all">All Levels</option>
+                                    <option value="DEBUG">DEBUG</option>
+                                    <option value="INFO">INFO</option>
+                                    <option value="WARNING">WARNING</option>
+                                    <option value="ERROR">ERROR</option>
+                                    <option value="CRITICAL">CRITICAL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" id="logSearch" placeholder="Search logs...">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button id="refreshLogsBtn" class="btn btn-telegram me-2">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                                </button>
+                                <button id="clearLogsBtn" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash me-2"></i>Clear Old Logs
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Level</th>
+                                        <th>Message</th>
+                                        <th>Context</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logsTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Loading logs...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Log File Location:</h6>
+                            <code id="logFilePath" class="d-block p-2 bg-light rounded">/workspace/storage/logs/</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Broadcast Section -->
         <div id="section-broadcast" class="content-section d-none">
             <div class="row g-4">

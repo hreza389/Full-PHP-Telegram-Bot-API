@@ -68,6 +68,60 @@ function initializeForms() {
         broadcastForm.addEventListener('submit', handleBroadcastSubmit);
     }
     
+    // Add Bot Form
+    const addBotForm = document.getElementById('addBotForm');
+    if (addBotForm) {
+        addBotForm.addEventListener('submit', handleAddBotSubmit);
+    }
+    
+    // Webhook Form
+    const webhookForm = document.getElementById('webhookForm');
+    if (webhookForm) {
+        webhookForm.addEventListener('submit', handleWebhookSubmit);
+    }
+    
+    // Delete Webhook Button
+    const deleteWebhookBtn = document.getElementById('deleteWebhookBtn');
+    if (deleteWebhookBtn) {
+        deleteWebhookBtn.addEventListener('click', handleDeleteWebhook);
+    }
+    
+    // Check Webhook Button
+    const checkWebhookBtn = document.getElementById('checkWebhookBtn');
+    if (checkWebhookBtn) {
+        checkWebhookBtn.addEventListener('click', handleCheckWebhook);
+    }
+    
+    // Payment Settings Form
+    const paymentSettingsForm = document.getElementById('paymentSettingsForm');
+    if (paymentSettingsForm) {
+        paymentSettingsForm.addEventListener('submit', handlePaymentSettingsSubmit);
+    }
+    
+    // Test Invoice Form
+    const testInvoiceForm = document.getElementById('testInvoiceForm');
+    if (testInvoiceForm) {
+        testInvoiceForm.addEventListener('submit', handleTestInvoiceSubmit);
+    }
+    
+    // Add Admin Form
+    const addAdminForm = document.getElementById('addAdminForm');
+    if (addAdminForm) {
+        addAdminForm.addEventListener('submit', handleAddAdminSubmit);
+    }
+    
+    // Refresh Logs Button
+    const refreshLogsBtn = document.getElementById('refreshLogsBtn');
+    if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener('click', loadLogs);
+    }
+    
+    // Clear Logs Button
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+    if (clearLogsBtn) {
+        clearLogsBtn.addEventListener('click', handleClearLogs);
+    }
+    
     // Target audience change handler
     const broadcastTarget = document.getElementById('broadcastTarget');
     if (broadcastTarget) {
@@ -149,6 +203,22 @@ function loadSectionData(sectionId) {
             break;
         case 'errors':
             loadErrors();
+            break;
+        case 'bots':
+            loadBots();
+            break;
+        case 'webhooks':
+            loadWebhookStatus();
+            break;
+        case 'payments':
+            loadPaymentSettings();
+            loadTransactions();
+            break;
+        case 'admins':
+            loadAdmins();
+            break;
+        case 'logs':
+            loadLogs();
             break;
     }
 }
@@ -808,6 +878,372 @@ async function clearErrors() {
     } catch (error) {
         showToast('Error clearing errors', 'danger');
     }
+}
+
+/**
+ * Bot Management Functions
+ */
+async function loadBots() {
+    try {
+        const result = await apiCall('get_bots');
+        const tbody = document.getElementById('botsTable');
+        
+        if (result.bots && result.bots.length > 0) {
+            tbody.innerHTML = result.bots.map(bot => `
+                <tr>
+                    <td>${bot.id}</td>
+                    <td>@${bot.username || 'N/A'}</td>
+                    <td><span class="badge badge-soft-${bot.is_active ? 'success' : 'danger'}">${bot.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleBot(${bot.id}, ${!bot.is_active})">
+                            ${bot.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteBot(${bot.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No bots configured</td></tr>';
+        }
+    } catch (error) {
+        document.getElementById('botsTable').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading bots</td></tr>';
+    }
+}
+
+async function handleAddBotSubmit(e) {
+    e.preventDefault();
+    const token = document.getElementById('botToken').value.trim();
+    const username = document.getElementById('botUsernameInput').value.trim();
+    
+    try {
+        const result = await apiCall('add_bot', { token, username });
+        
+        if (result.success) {
+            showToast('Bot added successfully!', 'success');
+            document.getElementById('addBotForm').reset();
+            loadBots();
+        } else {
+            showToast(result.error || 'Failed to add bot', 'danger');
+        }
+    } catch (error) {
+        showToast('Error adding bot', 'danger');
+    }
+}
+
+async function toggleBot(botId, isActive) {
+    try {
+        const result = await apiCall('toggle_bot', { bot_id: botId, is_active: isActive });
+        if (result.success) {
+            showToast(`Bot ${isActive ? 'activated' : 'deactivated'} successfully!`, 'success');
+            loadBots();
+        } else {
+            showToast(result.error || 'Failed to toggle bot', 'danger');
+        }
+    } catch (error) {
+        showToast('Error toggling bot', 'danger');
+    }
+}
+
+async function deleteBot(botId) {
+    if (!confirm('Are you sure you want to delete this bot?')) return;
+    
+    try {
+        const result = await apiCall('delete_bot', { bot_id: botId });
+        if (result.success) {
+            showToast('Bot deleted successfully!', 'success');
+            loadBots();
+        } else {
+            showToast(result.error || 'Failed to delete bot', 'danger');
+        }
+    } catch (error) {
+        showToast('Error deleting bot', 'danger');
+    }
+}
+
+/**
+ * Webhook Management Functions
+ */
+async function loadWebhookStatus() {
+    try {
+        const result = await apiCall('get_webhook_info');
+        const statusDiv = document.getElementById('webhookStatus');
+        const statusContent = document.getElementById('webhookStatusContent');
+        
+        if (result.ok !== undefined) {
+            statusDiv.classList.remove('d-none');
+            statusContent.textContent = JSON.stringify(result, null, 2);
+            
+            if (result.result && result.result.url) {
+                document.getElementById('webhookUrl').value = result.result.url;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading webhook status:', error);
+    }
+}
+
+async function handleWebhookSubmit(e) {
+    e.preventDefault();
+    const url = document.getElementById('webhookUrl').value.trim();
+    const secret = document.getElementById('webhookSecret').value.trim();
+    const allowedUpdatesSelect = document.getElementById('allowedUpdates');
+    const allowedUpdates = Array.from(allowedUpdatesSelect.selectedOptions).map(opt => opt.value);
+    
+    try {
+        const result = await apiCall('set_webhook', { url, secret_token: secret, allowed_updates: allowedUpdates });
+        
+        if (result.success) {
+            showToast('Webhook set successfully!', 'success');
+            loadWebhookStatus();
+        } else {
+            showToast(result.error || 'Failed to set webhook', 'danger');
+        }
+    } catch (error) {
+        showToast('Error setting webhook', 'danger');
+    }
+}
+
+async function handleDeleteWebhook() {
+    if (!confirm('Are you sure you want to delete the webhook?')) return;
+    
+    try {
+        const result = await apiCall('delete_webhook');
+        if (result.success) {
+            showToast('Webhook deleted successfully!', 'success');
+            document.getElementById('webhookUrl').value = '';
+            loadWebhookStatus();
+        } else {
+            showToast(result.error || 'Failed to delete webhook', 'danger');
+        }
+    } catch (error) {
+        showToast('Error deleting webhook', 'danger');
+    }
+}
+
+async function handleCheckWebhook() {
+    try {
+        const result = await apiCall('get_webhook_info');
+        const statusDiv = document.getElementById('webhookStatus');
+        const statusContent = document.getElementById('webhookStatusContent');
+        
+        statusDiv.classList.remove('d-none');
+        statusContent.textContent = JSON.stringify(result, null, 2);
+    } catch (error) {
+        showToast('Error checking webhook', 'danger');
+    }
+}
+
+/**
+ * Payment Management Functions
+ */
+async function loadPaymentSettings() {
+    try {
+        const result = await apiCall('get_payment_settings');
+        
+        if (result.settings) {
+            document.getElementById('paymentProvider').value = result.settings.provider || 'stripe';
+            document.getElementById('providerToken').value = result.settings.provider_token || '';
+            document.getElementById('paymentCurrency').value = result.settings.currency || 'USD';
+        }
+    } catch (error) {
+        console.error('Error loading payment settings:', error);
+    }
+}
+
+async function handlePaymentSettingsSubmit(e) {
+    e.preventDefault();
+    const provider = document.getElementById('paymentProvider').value;
+    const providerToken = document.getElementById('providerToken').value.trim();
+    const currency = document.getElementById('paymentCurrency').value;
+    
+    try {
+        const result = await apiCall('save_payment_settings', { provider, provider_token: providerToken, currency });
+        
+        if (result.success) {
+            showToast('Payment settings saved successfully!', 'success');
+        } else {
+            showToast(result.error || 'Failed to save payment settings', 'danger');
+        }
+    } catch (error) {
+        showToast('Error saving payment settings', 'danger');
+    }
+}
+
+async function handleTestInvoiceSubmit(e) {
+    e.preventDefault();
+    const chatId = document.getElementById('testChatId').value.trim();
+    const title = document.getElementById('invoiceTitle').value.trim();
+    const description = document.getElementById('invoiceDescription').value.trim();
+    const amount = parseInt(document.getElementById('invoiceAmount').value);
+    
+    try {
+        const result = await apiCall('send_test_invoice', { chat_id: chatId, title, description, amount });
+        
+        if (result.success) {
+            showToast('Test invoice sent successfully!', 'success');
+        } else {
+            showToast(result.error || 'Failed to send invoice', 'danger');
+        }
+    } catch (error) {
+        showToast('Error sending invoice', 'danger');
+    }
+}
+
+async function loadTransactions() {
+    try {
+        const result = await apiCall('get_transactions');
+        const tbody = document.getElementById('transactionsTable');
+        
+        if (result.transactions && result.transactions.length > 0) {
+            tbody.innerHTML = result.transactions.map(tx => `
+                <tr>
+                    <td>${formatDate(tx.created_at)}</td>
+                    <td>${tx.user_id}</td>
+                    <td>${(tx.amount / 100).toFixed(2)} ${tx.currency || 'USD'}</td>
+                    <td><span class="badge badge-soft-${tx.status === 'successful' ? 'success' : 'warning'}">${tx.status}</span></td>
+                    <td><code>${tx.payload || '-'}</code></td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No transactions yet</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+    }
+}
+
+/**
+ * Admin Management Functions
+ */
+async function loadAdmins() {
+    try {
+        const result = await apiCall('get_admins');
+        const tbody = document.getElementById('adminsTable');
+        
+        if (result.admins && result.admins.length > 0) {
+            tbody.innerHTML = result.admins.map(admin => `
+                <tr>
+                    <td>${admin.user_id}</td>
+                    <td>${admin.username || '@' + admin.user_id}</td>
+                    <td>${admin.full_name || 'N/A'}</td>
+                    <td><small>${Object.keys(admin.permissions || {}).filter(k => admin.permissions[k]).join(', ') || 'All'}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeAdmin(${admin.id})">Remove</button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No admin users configured</td></tr>';
+        }
+    } catch (error) {
+        document.getElementById('adminsTable').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading admins</td></tr>';
+    }
+}
+
+async function handleAddAdminSubmit(e) {
+    e.preventDefault();
+    const userId = parseInt(document.getElementById('adminUserId').value);
+    const username = document.getElementById('adminUsername').value.trim();
+    const fullName = document.getElementById('adminFullName').value.trim();
+    
+    const permissions = {
+        manage_bots: document.getElementById('permBots').checked,
+        manage_webhooks: document.getElementById('permWebhooks').checked,
+        manage_payments: document.getElementById('permPayments').checked,
+        send_broadcast: document.getElementById('permBroadcast').checked,
+        view_users: document.getElementById('permUsers').checked,
+        change_settings: document.getElementById('permSettings').checked
+    };
+    
+    try {
+        const result = await apiCall('add_admin', { user_id: userId, username, full_name: fullName, permissions });
+        
+        if (result.success) {
+            showToast('Admin user added successfully!', 'success');
+            document.getElementById('addAdminForm').reset();
+            loadAdmins();
+        } else {
+            showToast(result.error || 'Failed to add admin', 'danger');
+        }
+    } catch (error) {
+        showToast('Error adding admin', 'danger');
+    }
+}
+
+async function removeAdmin(adminId) {
+    if (!confirm('Are you sure you want to remove this admin?')) return;
+    
+    try {
+        const result = await apiCall('remove_admin', { admin_id: adminId });
+        if (result.success) {
+            showToast('Admin removed successfully!', 'success');
+            loadAdmins();
+        } else {
+            showToast(result.error || 'Failed to remove admin', 'danger');
+        }
+    } catch (error) {
+        showToast('Error removing admin', 'danger');
+    }
+}
+
+/**
+ * Logs Management Functions
+ */
+async function loadLogs() {
+    const level = document.getElementById('logLevelFilter').value;
+    const search = document.getElementById('logSearch').value;
+    
+    try {
+        const result = await apiCall('get_logs', { level, search });
+        const tbody = document.getElementById('logsTable');
+        
+        if (result.logs && result.logs.length > 0) {
+            tbody.innerHTML = result.logs.map(log => `
+                <tr>
+                    <td><small>${formatDate(log.timestamp)}</small></td>
+                    <td><span class="badge badge-soft-${getLogLevelBadge(log.level)}">${log.level}</span></td>
+                    <td>${escapeHtml(log.message)}</td>
+                    <td><small><code>${escapeHtml(JSON.stringify(log.context || '').substring(0, 50))}</code></small></td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No logs found</td></tr>';
+        }
+        
+        // Update log file path display
+        if (result.log_path) {
+            document.getElementById('logFilePath').textContent = result.log_path;
+        }
+    } catch (error) {
+        document.getElementById('logsTable').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading logs</td></tr>';
+    }
+}
+
+async function handleClearLogs() {
+    if (!confirm('Are you sure you want to clear old logs? This cannot be undone.')) return;
+    
+    try {
+        const result = await apiCall('clear_old_logs');
+        if (result.success) {
+            showToast('Old logs cleared successfully!', 'success');
+            loadLogs();
+        } else {
+            showToast(result.error || 'Failed to clear logs', 'danger');
+        }
+    } catch (error) {
+        showToast('Error clearing logs', 'danger');
+    }
+}
+
+function getLogLevelBadge(level) {
+    const badges = {
+        'DEBUG': 'info',
+        'INFO': 'success',
+        'WARNING': 'warning',
+        'ERROR': 'danger',
+        'CRITICAL': 'danger'
+    };
+    return badges[level] || 'secondary';
 }
 
 /**
